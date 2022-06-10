@@ -36,6 +36,7 @@
 #include "crypto.h"
 #include "dco.h"
 #include "errlevel.h"
+#include "multi.h"
 #include "networking.h"
 #include "openvpn.h"
 #include "options.h"
