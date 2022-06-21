@@ -2366,6 +2366,17 @@ finish_options(struct context *c)
         return false;
     }
 
+    /* Check if the pushed options are compatible with DCO if we have
+     * DCO enabled */
+    if (dco_enabled(&c->options)
+        && !dco_check_pull_options(D_TLS_ERRORS, &c->options))
+    {
+        msg(D_TLS_ERRORS, "OPTIONS ERROR: pushed options are incompatible with "
+            "data channel offload. Use --disable-dco to connect"
+            "to this server");
+        return false;
+    }
+
     return true;
 }
 
