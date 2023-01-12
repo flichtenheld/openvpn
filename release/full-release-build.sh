@@ -7,6 +7,13 @@
 # at all usable outside of the actual OpenVPN community
 # infrastructure.
 
+# BEFORE starting this script:
+# - make sure openvpn tag is available in src/openvpn
+# - update src/openvpn-gui
+# - update src/vcpkg
+# - check vars
+# - check vars.infrastructure (needs completed terraform apply!)
+
 set -eux
 set -o pipefail
 
@@ -18,14 +25,25 @@ pushd "$TOP_DIR"
 . "$SCRIPT_DIR/vars.infrastructure"
 
 $SCRIPT_DIR/version-and-tags.sh
-$SCRIPT_DIR/create-release-files.sh
+read -p "push OpenVPN-$BUILD_VERSION in openvpn-gui?"
+git -C $TOP_DIR/src/openvpn-gui push "$INTERNAL_GIT_REPO_GUI_RW" \
+    master \
+    "v$OPENVPN_GUI_CURRENT_FULL_VERSION" \
+    "OpenVPN-$BUILD_VERSION"
+# make sure git knows we pushed this
+git -C $TOP_DIR/src/openvpn-gui remote update
+#TODO: make idempotent
+#$SCRIPT_DIR/create-release-files.sh
+read -p "Upload tarballs to $SECONDARY_WEBSERVER?"
 # uploads tarballs, required by some build steps
 $SCRIPT_DIR/sign-and-push.sh
 
 # git push tag to github, but not official repo!
 git push "$INTERNAL_GIT_REPO_BUILD_RW" "OpenVPN-$BUILD_VERSION"
+git remote update
 
 # Build Debian packages
+ssh "$DEBIAN_SBUILD_BUILDHOST" cloud-init status --wait
 ssh "$DEBIAN_SBUILD_BUILDHOST" git -C "$DEBIAN_SBUILD_WORKDIR/src/openvpn" remote add -f --tags internal "$INTERNAL_GIT_REPO_OPENVPN_RO"
 ssh "$DEBIAN_SBUILD_BUILDHOST" git -C "$DEBIAN_SBUILD_WORKDIR" remote add -f --tags internal "$INTERNAL_GIT_REPO_BUILD_RO"
 ssh "$DEBIAN_SBUILD_BUILDHOST" git -C "$DEBIAN_SBUILD_WORKDIR" checkout --recurse-submodules -f "OpenVPN-$BUILD_VERSION"
