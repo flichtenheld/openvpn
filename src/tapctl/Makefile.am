@@ -23,7 +23,6 @@ include $(top_srcdir)/build/ltrc.inc
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 EXTRA_DIST = \
-	tapctl.vcxproj \
 	tapctl.props \
 	tapctl.exe.manifest
 

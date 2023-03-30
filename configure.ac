@@ -1508,8 +1508,6 @@ AC_CONFIG_FILES([
 	version.sh
 	Makefile
 	build/Makefile
-	build/msvc/Makefile
-	build/msvc/msvc-generate/Makefile
 	distro/Makefile
 	distro/systemd/Makefile
 	doc/Makefile
