@@ -1181,7 +1181,7 @@ link_socket_write_udp(struct link_socket *sock,
 }
 
 /* write a TCP or UDP packet to link */
-static inline int
+static inline size_t
 link_socket_write(struct link_socket *sock,
                   struct buffer *buf,
                   struct link_socket_actual *to)
@@ -1198,7 +1198,7 @@ link_socket_write(struct link_socket *sock,
     else
     {
         ASSERT(0);
-        return -1; /* NOTREACHED */
+        return 0; /* NOTREACHED */
     }
 }
 
