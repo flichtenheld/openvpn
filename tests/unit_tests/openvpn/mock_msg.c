@@ -38,7 +38,6 @@
 #include "error.h"
 
 unsigned int x_debug_level = 0; /* Default to (almost) no debugging output */
-bool fatal_error_triggered = false;
 
 void
 mock_set_debug_level(int level)
@@ -58,11 +57,14 @@ x_msg_va(const unsigned int flags, const char *format,
 {
     if (flags & M_FATAL)
     {
-        fatal_error_triggered = true;
         printf("FATAL ERROR:");
     }
     vprintf(format, arglist);
     printf("\n");
+    if (flags & M_FATAL)
+    {
+        mock_assert(false, "FATAL ERROR", __FILE__, __LINE__);
+    }
 }
 
 void

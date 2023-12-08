@@ -4,6 +4,8 @@ EXTRA_DIST = input
 
 AM_TESTSUITE_SUMMARY_HEADER = ' for $(PACKAGE_STRING) Unit-Tests'
 
+AM_TESTS_ENVIRONMENT = export LSAN_OPTIONS=suppressions=$(srcdir)/input/leak_suppr.txt;
+
 test_binaries=
 
 if HAVE_LD_WRAP_SUPPORT

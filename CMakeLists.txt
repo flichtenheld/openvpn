@@ -666,7 +666,7 @@ if (BUILD_TESTING)
             # for compat with autotools make check
             set(_UT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_tests/openvpn)
             set_tests_properties(${test_name} PROPERTIES
-                ENVIRONMENT "srcdir=${_UT_SOURCE_DIR}")
+                ENVIRONMENT "srcdir=${_UT_SOURCE_DIR};LSAN_OPTIONS=suppressions=${_UT_SOURCE_DIR}/input/leak_suppr.txt")
         endif ()
         add_executable(${test_name}
             tests/unit_tests/openvpn/${test_name}.c
