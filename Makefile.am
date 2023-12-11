@@ -44,7 +44,8 @@ EXTRA_DIST = \
 	debug \
 	CMakeLists.txt \
 	CMakePresets.json \
-	config.h.cmake.in
+	config.h.cmake.in \
+	forked-test-driver
 
 .PHONY: config-version.h doxygen
 
