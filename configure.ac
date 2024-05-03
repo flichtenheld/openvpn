@@ -23,6 +23,7 @@ dnl  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 dnl Process this file with autoconf to produce a configure script.
 
+dnl Dummy
 AC_PREREQ(2.59)
 
 m4_include(version.m4)
