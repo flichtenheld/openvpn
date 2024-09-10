@@ -1256,7 +1256,7 @@ socket_do_accept(socket_descriptor_t sd,
 
     if (!socket_defined(new_sd))
     {
-        msg(D_LINK_ERRORS | M_ERRNO, "TCP: accept(%d) failed", (int)sd);
+        msg(D_LINK_ERRORS | M_ERRNO, "TCP: accept(" SOCKET_PRINTF ") failed", sd);
     }
     /* only valid if we have remote_len_af!=0 */
     else if (remote_len_af && remote_len != remote_len_af)
@@ -3405,7 +3405,7 @@ link_socket_write_tcp(struct link_socket *sock,
                       struct link_socket_actual *to)
 {
     packet_size_type len = BLEN(buf);
-    dmsg(D_STREAM_DEBUG, "STREAM: WRITE %d offset=%d", (int)len, buf->offset);
+    dmsg(D_STREAM_DEBUG, "STREAM: WRITE %u offset=%d", len, buf->offset);
     ASSERT(len <= sock->stream_buf.maxlen);
     len = htonps(len);
     ASSERT(buf_write_prepend(buf, &len, sizeof(len)));
@@ -3599,9 +3599,9 @@ socket_recv_queue(struct link_socket *sock, int maxsize)
             ASSERT(SetEvent(sock->reads.overlapped.hEvent));
             sock->reads.status = 0;
 
-            dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive immediate return [%d,%d]",
-                 (int) wsabuf[0].len,
-                 (int) sock->reads.size);
+            dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive immediate return [%lu,%lu]",
+                 wsabuf[0].len,
+                 sock->reads.size);
         }
         else
         {
@@ -3610,8 +3610,8 @@ socket_recv_queue(struct link_socket *sock, int maxsize)
             {
                 sock->reads.iostate = IOSTATE_QUEUED;
                 sock->reads.status = status;
-                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive queued [%d]",
-                     (int) wsabuf[0].len);
+                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive queued [%lu]",
+                     wsabuf[0].len);
             }
             else /* error occurred */
             {
@@ -3619,8 +3619,8 @@ socket_recv_queue(struct link_socket *sock, int maxsize)
                 ASSERT(SetEvent(sock->reads.overlapped.hEvent));
                 sock->reads.iostate = IOSTATE_IMMEDIATE_RETURN;
                 sock->reads.status = status;
-                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive error [%d]: %s",
-                     (int) wsabuf[0].len,
+                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Receive error [%lu]: %s",
+                     wsabuf[0].len,
                      strerror_win32(status, &gc));
                 gc_free(&gc);
             }
@@ -3714,9 +3714,9 @@ socket_send_queue(struct link_socket *sock, struct buffer *buf, const struct lin
 
             sock->writes.status = 0;
 
-            dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send immediate return [%d,%d]",
-                 (int) wsabuf[0].len,
-                 (int) sock->writes.size);
+            dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send immediate return [%lu,%lu]",
+                 wsabuf[0].len,
+                 sock->writes.size);
         }
         else
         {
@@ -3726,8 +3726,8 @@ socket_send_queue(struct link_socket *sock, struct buffer *buf, const struct lin
             {
                 sock->writes.iostate = IOSTATE_QUEUED;
                 sock->writes.status = status;
-                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send queued [%d]",
-                     (int) wsabuf[0].len);
+                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send queued [%lu]",
+                     wsabuf[0].len);
             }
             else /* error occurred */
             {
@@ -3736,8 +3736,8 @@ socket_send_queue(struct link_socket *sock, struct buffer *buf, const struct lin
                 sock->writes.iostate = IOSTATE_IMMEDIATE_RETURN;
                 sock->writes.status = status;
 
-                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send error [%d]: %s",
-                     (int) wsabuf[0].len,
+                dmsg(D_WIN32_IO, "WIN32 I/O: Socket Send error [%lu]: %s",
+                     wsabuf[0].len,
                      strerror_win32(status, &gc));
 
                 gc_free(&gc);
@@ -3968,9 +3968,9 @@ socket_bind_unix(socket_descriptor_t sd,
     if (bind(sd, (struct sockaddr *) local, sizeof(struct sockaddr_un)))
     {
         msg(M_FATAL | M_ERRNO,
-            "%s: Socket bind[%d] failed on unix domain socket %s",
+            "%s: Socket bind[" SOCKET_PRINTF "] failed on unix domain socket %s",
             prefix,
-            (int)sd,
+            sd,
             sockaddr_unix_name(local, "NULL"));
     }
 
