@@ -38,22 +38,25 @@
 #define MAXPATH 1024
 #endif
 
-#define ovpn_err(fmt, ...) \
-    plugin->log(PLOG_ERR,   "SSO", fmt, ## __VA_ARGS__)
-#define ovpn_dbg(fmt, ...) \
-    plugin->log(PLOG_DEBUG, "SSO", fmt, ## __VA_ARGS__)
-#define ovpn_note(fmt, ...) \
-    plugin->log(PLOG_NOTE,  "SSO", fmt, ## __VA_ARGS__)
+#define ovpn_err(fmt, ...)  plugin->log(PLOG_ERR, "SSO", fmt, ##__VA_ARGS__)
+#define ovpn_dbg(fmt, ...)  plugin->log(PLOG_DEBUG, "SSO", fmt, ##__VA_ARGS__)
+#define ovpn_note(fmt, ...) plugin->log(PLOG_NOTE, "SSO", fmt, ##__VA_ARGS__)
 
-enum endpoint { CLIENT = 1, SERVER = 2 };
+enum endpoint
+{
+    CLIENT = 1,
+    SERVER = 2
+};
 
-struct plugin {
+struct plugin
+{
     plugin_log_t log;
     enum endpoint type;
     int mask;
 };
 
-struct session {
+struct session
+{
     char user[48];
     char key[48];
 };
@@ -100,9 +103,9 @@ openvpn_plugin_open_v3(const int version,
     }
 
     plugin->type = get_env("remote_1", args->envp) ? CLIENT : SERVER;
-    plugin->log  = args->callbacks->plugin_log;
+    plugin->log = args->callbacks->plugin_log;
 
-    plugin->mask  = OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_FINAL);
+    plugin->mask = OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_FINAL);
     plugin->mask |= OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_VERIFY);
 
     ovpn_note("vpn endpoint type=%s", plugin->type == CLIENT ? "client" : "server");
@@ -165,8 +168,8 @@ session_user_set(struct session *sess, X509 *x509)
 static int
 tls_verify(struct openvpn_plugin_args_func_in const *args)
 {
-    struct plugin *plugin = (struct plugin  *)args->handle;
-    struct session *sess  = (struct session *)args->per_client_context;
+    struct plugin *plugin = (struct plugin *)args->handle;
+    struct session *sess = (struct session *)args->per_client_context;
 
     /* we store cert subject for the server end point only */
     if (plugin->type != SERVER)
@@ -201,8 +204,8 @@ file_store(char *file, char *content)
 static void
 server_store(struct openvpn_plugin_args_func_in const *args)
 {
-    struct plugin *plugin = (struct plugin  *)args->handle;
-    struct session *sess  = (struct session *)args->per_client_context;
+    struct plugin *plugin = (struct plugin *)args->handle;
+    struct session *sess = (struct session *)args->per_client_context;
 
     char file[MAXPATH];
     snprintf(file, sizeof(file) - 1, "/tmp/openvpn_sso_%s", sess->key);
@@ -213,8 +216,8 @@ server_store(struct openvpn_plugin_args_func_in const *args)
 static void
 client_store(struct openvpn_plugin_args_func_in const *args)
 {
-    struct plugin *plugin = (struct plugin  *)args->handle;
-    struct session *sess  = (struct session *)args->per_client_context;
+    struct plugin *plugin = (struct plugin *)args->handle;
+    struct session *sess = (struct session *)args->per_client_context;
 
     char *file = "/tmp/openvpn_sso_user";
     ovpn_note("app session file: %s", file);
@@ -225,8 +228,8 @@ static int
 tls_final(struct openvpn_plugin_args_func_in const *args,
           struct openvpn_plugin_args_func_return *rv)
 {
-    struct plugin *plugin = (struct plugin  *)args->handle;
-    struct session *sess  = (struct session *)args->per_client_context;
+    struct plugin *plugin = (struct plugin *)args->handle;
+    struct session *sess = (struct session *)args->per_client_context;
 
     const char *key;
     if (!(key = get_env("exported_keying_material", args->envp)))
@@ -272,7 +275,7 @@ OPENVPN_EXPORT void *
 openvpn_plugin_client_constructor_v1(openvpn_plugin_handle_t handle)
 {
     struct plugin *plugin = (struct plugin *)handle;
-    struct session *sess  = calloc(1, sizeof(*sess));
+    struct session *sess = calloc(1, sizeof(*sess));
 
     ovpn_note("app session created");
 
@@ -283,7 +286,7 @@ OPENVPN_EXPORT void
 openvpn_plugin_client_destructor_v1(openvpn_plugin_handle_t handle, void *ctx)
 {
     struct plugin *plugin = (struct plugin *)handle;
-    struct session *sess  = (struct session *)ctx;
+    struct session *sess = (struct session *)ctx;
 
     ovpn_note("app session key: %s", sess->key);
     ovpn_note("app session destroyed");

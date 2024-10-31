@@ -44,20 +44,19 @@
 
 struct signal_info siginfo_static; /* GLOBAL */
 
-struct signame {
+struct signame
+{
     int value;
     int priority;
     const char *upper;
     const char *lower;
 };
 
-static const struct signame signames[] = {
-    { SIGINT, 5, "SIGINT",  "sigint"},
-    { SIGTERM, 4, "SIGTERM", "sigterm" },
-    { SIGHUP, 3, "SIGHUP",  "sighup" },
-    { SIGUSR1, 2, "SIGUSR1", "sigusr1" },
-    { SIGUSR2, 1, "SIGUSR2", "sigusr2" }
-};
+static const struct signame signames[] = { { SIGINT, 5, "SIGINT", "sigint" },
+                                           { SIGTERM, 4, "SIGTERM", "sigterm" },
+                                           { SIGHUP, 3, "SIGHUP", "sighup" },
+                                           { SIGUSR1, 2, "SIGUSR1", "sigusr1" },
+                                           { SIGUSR2, 1, "SIGUSR2", "sigusr2" } };
 
 /* mask for hard signals from management or windows */
 static unsigned long long ignored_hard_signals_mask;
@@ -185,7 +184,9 @@ throw_signal(const int signum)
 
     if (!try_throw_signal(&siginfo_static, signum, SIG_SOURCE_HARD))
     {
-        msg(D_SIGNAL_DEBUG, "Ignoring %s when %s has been received", signal_name(signum, true),
+        msg(D_SIGNAL_DEBUG,
+            "Ignoring %s when %s has been received",
+            signal_name(signum, true),
             signal_name(siginfo_static.signal_received, true));
     }
     else
@@ -210,12 +211,13 @@ throw_signal_soft(const int signum, const char *signal_text)
     if (try_throw_signal(&siginfo_static, signum, SIG_SOURCE_SOFT))
     {
         siginfo_static.signal_text = signal_text;
-        msg(D_SIGNAL_DEBUG, "Throw signal (soft): %s (%s)", signal_name(signum, true),
-            signal_text);
+        msg(D_SIGNAL_DEBUG, "Throw signal (soft): %s (%s)", signal_name(signum, true), signal_text);
     }
     else
     {
-        msg(D_SIGNAL_DEBUG, "Ignoring %s when %s has been received", signal_name(signum, true),
+        msg(D_SIGNAL_DEBUG,
+            "Ignoring %s when %s has been received",
+            signal_name(signum, true),
             signal_name(siginfo_static.signal_received, true));
     }
 
@@ -242,12 +244,13 @@ register_signal(struct signal_info *si, int signum, const char *signal_text)
         {
             si->source = SIG_SOURCE_CONNECTION_FAILED;
         }
-        msg(D_SIGNAL_DEBUG, "register signal: %s (%s)", signal_name(signum, true),
-            signal_text);
+        msg(D_SIGNAL_DEBUG, "register signal: %s (%s)", signal_name(signum, true), signal_text);
     }
     else
     {
-        msg(D_SIGNAL_DEBUG, "Ignoring %s when %s has been received", signal_name(signum, true),
+        msg(D_SIGNAL_DEBUG,
+            "Ignoring %s when %s has been received",
+            signal_name(signum, true),
             signal_name(si->signal_received, true));
     }
 
@@ -320,18 +323,31 @@ print_signal(const struct signal_info *si, const char *title, int msglevel)
         {
             case SIGINT:
             case SIGTERM:
-                msg(msglevel, "%s[%s,%s] received, %s exiting",
-                    signal_name(si->signal_received, true), hs, type, t);
+                msg(msglevel,
+                    "%s[%s,%s] received, %s exiting",
+                    signal_name(si->signal_received, true),
+                    hs,
+                    type,
+                    t);
                 break;
 
             case SIGHUP:
             case SIGUSR1:
-                msg(msglevel, "%s[%s,%s] received, %s restarting",
-                    signal_name(si->signal_received, true), hs, type, t);
+                msg(msglevel,
+                    "%s[%s,%s] received, %s restarting",
+                    signal_name(si->signal_received, true),
+                    hs,
+                    type,
+                    t);
                 break;
 
             default:
-                msg(msglevel, "Unknown signal %d [%s,%s] received by %s", si->signal_received, hs, type, t);
+                msg(msglevel,
+                    "Unknown signal %d [%s,%s] received by %s",
+                    si->signal_received,
+                    hs,
+                    type,
+                    t);
                 break;
         }
     }
@@ -368,7 +384,8 @@ signal_restart_status(const struct signal_info *si)
         {
             management_set_state(management,
                                  state,
-                                 si->signal_text ? si->signal_text : signal_name(si->signal_received, true),
+                                 si->signal_text ? si->signal_text
+                                                 : signal_name(si->signal_received, true),
                                  NULL,
                                  NULL,
                                  NULL,
@@ -402,7 +419,7 @@ pre_init_signal_catch(void)
     struct sigaction sa;
     CLEAR(sa);
 
-    sigfillset(&block_mask); /* all signals */
+    sigfillset(&block_mask);  /* all signals */
     sa.sa_handler = signal_handler;
     sa.sa_mask = block_mask;  /* signals blocked inside the handler */
     sa.sa_flags = SA_RESTART; /* match with the behaviour of signal() on Linux and BSD */
@@ -431,9 +448,9 @@ post_init_signal_catch(void)
     struct sigaction sa;
     CLEAR(sa);
 
-    sigfillset(&block_mask); /* all signals */
+    sigfillset(&block_mask);  /* all signals */
     sa.sa_handler = signal_handler;
-    sa.sa_mask = block_mask; /* signals blocked inside the handler */
+    sa.sa_mask = block_mask;  /* signals blocked inside the handler */
     sa.sa_flags = SA_RESTART; /* match with the behaviour of signal() on Linux and BSD */
 
     signal_mode = SM_POST_INIT;
@@ -499,8 +516,10 @@ print_status(struct context *c, struct status_output *so)
     status_printf(so, "Updated,%s", time_string(0, 0, false, &gc));
     status_printf(so, "TUN/TAP read bytes," counter_format, c->c2.tun_read_bytes);
     status_printf(so, "TUN/TAP write bytes," counter_format, c->c2.tun_write_bytes);
-    status_printf(so, "TCP/UDP read bytes," counter_format, c->c2.link_read_bytes + c->c2.dco_read_bytes);
-    status_printf(so, "TCP/UDP write bytes," counter_format, c->c2.link_write_bytes + c->c2.dco_write_bytes);
+    status_printf(
+        so, "TCP/UDP read bytes," counter_format, c->c2.link_read_bytes + c->c2.dco_read_bytes);
+    status_printf(
+        so, "TCP/UDP write bytes," counter_format, c->c2.link_write_bytes + c->c2.dco_write_bytes);
     status_printf(so, "Auth read bytes," counter_format, c->c2.link_read_bytes_auth);
 #ifdef USE_COMP
     if (c->c2.comp_context)
@@ -566,12 +585,13 @@ process_explicit_exit_notification_init(struct context *c)
 void
 process_explicit_exit_notification_timer_wakeup(struct context *c)
 {
-    if (event_timeout_trigger(&c->c2.explicit_exit_notification_interval,
-                              &c->c2.timeval,
-                              ETT_DEFAULT))
+    if (event_timeout_trigger(
+            &c->c2.explicit_exit_notification_interval, &c->c2.timeval, ETT_DEFAULT))
     {
-        ASSERT(c->c2.explicit_exit_notification_time_wait && c->options.ce.explicit_exit_notification);
-        if (now >= c->c2.explicit_exit_notification_time_wait + c->options.ce.explicit_exit_notification)
+        ASSERT(c->c2.explicit_exit_notification_time_wait
+               && c->options.ce.explicit_exit_notification);
+        if (now >= c->c2.explicit_exit_notification_time_wait
+                       + c->options.ce.explicit_exit_notification)
         {
             event_timeout_clear(&c->c2.explicit_exit_notification_interval);
             register_signal(c->sig, SIGTERM, "exit-with-notification");
@@ -609,8 +629,7 @@ static bool
 process_sigterm(struct context *c)
 {
     bool ret = true;
-    if (c->options.ce.explicit_exit_notification
-        && !c->c2.explicit_exit_notification_time_wait)
+    if (c->options.ce.explicit_exit_notification && !c->c2.explicit_exit_notification_time_wait)
     {
         process_explicit_exit_notification_init(c);
         ret = false;
@@ -630,7 +649,8 @@ remap_restart_signals(struct context *c)
         && event_timeout_defined(&c->c2.explicit_exit_notification_interval)
         && c->sig->source != SIG_SOURCE_HARD)
     {
-        msg(M_INFO, "Converting soft %s received during exit notification to SIGTERM",
+        msg(M_INFO,
+            "Converting soft %s received during exit notification to SIGTERM",
             signal_name(c->sig->signal_received, true));
         register_signal(c->sig, SIGTERM, "exit-with-notification");
     }

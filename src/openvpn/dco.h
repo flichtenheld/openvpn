@@ -44,8 +44,8 @@ struct options;
 struct tls_multi;
 struct tuntap;
 
-#define DCO_IROUTE_METRIC   100
-#define DCO_DEFAULT_METRIC  200
+#define DCO_IROUTE_METRIC  100
+#define DCO_DEFAULT_METRIC 200
 
 #if defined(ENABLE_DCO)
 
@@ -156,9 +156,12 @@ void dco_event_set(dco_context_t *dco, struct event_set *es, void *arg);
  *
  * @return          0 on success or a negative error code otherwise
  */
-int init_key_dco_bi(struct tls_multi *multi, struct key_state *ks,
-                    const struct key2 *key2, int key_direction,
-                    const char *ciphername, bool server);
+int init_key_dco_bi(struct tls_multi *multi,
+                    struct key_state *ks,
+                    const struct key2 *key2,
+                    int key_direction,
+                    const char *ciphername,
+                    bool server);
 
 /**
  * Possibly swap or wipe keys from DCO
@@ -190,8 +193,11 @@ int dco_p2p_add_new_peer(struct context *c);
  *
  * @return                   0 on success or a negative error code otherwise
  */
-int dco_set_peer(dco_context_t *dco, unsigned int peerid,
-                 int keepalive_interval, int keepalive_timeout, int mss);
+int dco_set_peer(dco_context_t *dco,
+                 unsigned int peerid,
+                 int keepalive_interval,
+                 int keepalive_timeout,
+                 int mss);
 
 /**
  * Remove a peer from DCO
@@ -217,7 +223,8 @@ int dco_multi_add_new_peer(struct multi_context *m, struct multi_instance *mi);
  * @param mi        the client instance acting as nexthop for the route
  * @param addr      the route to add
  */
-void dco_install_iroute(struct multi_context *m, struct multi_instance *mi,
+void dco_install_iroute(struct multi_context *m,
+                        struct multi_instance *mi,
                         struct mroute_addr *addr);
 
 /**
@@ -235,7 +242,8 @@ void dco_delete_iroutes(struct multi_context *m, struct multi_instance *mi);
  * @param m                     the server context
  * @param raise_sigusr1_on_err  whether to raise SIGUSR1 on error
  **/
-int dco_get_peer_stats_multi(dco_context_t *dco, struct multi_context *m,
+int dco_get_peer_stats_multi(dco_context_t *dco,
+                             struct multi_context *m,
                              const bool raise_sigusr1_on_err);
 
 /**
@@ -262,7 +270,7 @@ dco_supports_epoch_data(struct context *c)
 {
     return false;
 }
-#else /* if defined(ENABLE_DCO) */
+#else  /* if defined(ENABLE_DCO) */
 
 typedef void *dco_context_t;
 
@@ -326,9 +334,12 @@ dco_event_set(dco_context_t *dco, struct event_set *es, void *arg)
 }
 
 static inline int
-init_key_dco_bi(struct tls_multi *multi, struct key_state *ks,
-                const struct key2 *key2, int key_direction,
-                const char *ciphername, bool server)
+init_key_dco_bi(struct tls_multi *multi,
+                struct key_state *ks,
+                const struct key2 *key2,
+                int key_direction,
+                const char *ciphername,
+                bool server)
 {
     return 0;
 }
@@ -347,8 +358,8 @@ dco_p2p_add_new_peer(struct context *c)
 }
 
 static inline int
-dco_set_peer(dco_context_t *dco, unsigned int peerid,
-             int keepalive_interval, int keepalive_timeout, int mss)
+dco_set_peer(
+    dco_context_t *dco, unsigned int peerid, int keepalive_interval, int keepalive_timeout, int mss)
 {
     return 0;
 }
@@ -365,8 +376,7 @@ dco_multi_add_new_peer(struct multi_context *m, struct multi_instance *mi)
 }
 
 static inline void
-dco_install_iroute(struct multi_context *m, struct multi_instance *mi,
-                   struct mroute_addr *addr)
+dco_install_iroute(struct multi_context *m, struct multi_instance *mi, struct mroute_addr *addr)
 {
 }
 
@@ -376,7 +386,8 @@ dco_delete_iroutes(struct multi_context *m, struct multi_instance *mi)
 }
 
 static inline int
-dco_get_peer_stats_multi(dco_context_t *dco, struct multi_context *m,
+dco_get_peer_stats_multi(dco_context_t *dco,
+                         struct multi_context *m,
                          const bool raise_sigusr1_on_err)
 {
     return 0;

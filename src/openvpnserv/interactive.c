@@ -42,32 +42,32 @@
 #include "wfp_block.h"
 #include "ring_buffer.h"
 
-#define IO_TIMEOUT  2000 /*ms*/
+#define IO_TIMEOUT 2000 /*ms*/
 
-#define ERROR_OPENVPN_STARTUP        0x20000000
-#define ERROR_STARTUP_DATA           0x20000001
-#define ERROR_MESSAGE_DATA           0x20000002
-#define ERROR_MESSAGE_TYPE           0x20000003
+#define ERROR_OPENVPN_STARTUP 0x20000000
+#define ERROR_STARTUP_DATA    0x20000001
+#define ERROR_MESSAGE_DATA    0x20000002
+#define ERROR_MESSAGE_TYPE    0x20000003
 
 static SERVICE_STATUS_HANDLE service;
 static SERVICE_STATUS status = { .dwServiceType = SERVICE_WIN32_SHARE_PROCESS };
 static HANDLE exit_event = NULL;
 static settings_t settings;
 static HANDLE rdns_semaphore = NULL;
-#define RDNS_TIMEOUT 600  /* seconds to wait for the semaphore */
+#define RDNS_TIMEOUT 600 /* seconds to wait for the semaphore */
 
-#define TUN_IOCTL_REGISTER_RINGS CTL_CODE(51820U, 0x970U, METHOD_BUFFERED, FILE_READ_DATA | FILE_WRITE_DATA)
+#define TUN_IOCTL_REGISTER_RINGS \
+    CTL_CODE(51820U, 0x970U, METHOD_BUFFERED, FILE_READ_DATA | FILE_WRITE_DATA)
 
-openvpn_service_t interactive_service = {
-    interactive,
-    _L(PACKAGE_NAME) L"ServiceInteractive",
-    _L(PACKAGE_NAME) L" Interactive Service",
-    SERVICE_DEPENDENCIES,
-    SERVICE_AUTO_START
-};
+openvpn_service_t interactive_service = { interactive,
+                                          _L(PACKAGE_NAME) L"ServiceInteractive",
+                                          _L(PACKAGE_NAME) L" Interactive Service",
+                                          SERVICE_DEPENDENCIES,
+                                          SERVICE_AUTO_START };
 
 
-typedef struct {
+typedef struct
+{
     WCHAR *directory;
     WCHAR *options;
     WCHAR *std_input;
@@ -75,14 +75,16 @@ typedef struct {
 
 
 /* Datatype for linked lists */
-typedef struct _list_item {
+typedef struct _list_item
+{
     struct _list_item *next;
     LPVOID data;
 } list_item_t;
 
 
 /* Datatypes for undo information */
-typedef enum {
+typedef enum
+{
     address,
     route,
     wfp_block,
@@ -95,24 +97,28 @@ typedef enum {
 } undo_type_t;
 typedef list_item_t *undo_lists_t[_undo_type_max];
 
-typedef struct {
+typedef struct
+{
     HANDLE engine;
     int index;
     int metric_v4;
     int metric_v6;
 } wfp_block_data_t;
 
-typedef struct {
+typedef struct
+{
     char itf_name[256];
     PWSTR domains;
 } dns_domains_undo_data_t;
 
-typedef struct {
+typedef struct
+{
     struct tun_ring *send_ring;
     struct tun_ring *receive_ring;
 } ring_buffer_maps_t;
 
-typedef union {
+typedef union
+{
     message_header_t header;
     address_message_t address;
     route_message_t route;
@@ -141,7 +147,7 @@ AddListItem(list_item_t **pfirst, LPVOID data)
     return NO_ERROR;
 }
 
-typedef BOOL (*match_fn_t) (LPVOID item, LPVOID ctx);
+typedef BOOL (*match_fn_t)(LPVOID item, LPVOID ctx);
 
 static LPVOID
 RemoveListItem(list_item_t **pfirst, match_fn_t match, LPVOID ctx)
@@ -218,7 +224,8 @@ ResetOverlapped(LPOVERLAPPED overlapped)
 }
 
 
-typedef enum {
+typedef enum
+{
     peek,
     read,
     write
@@ -265,8 +272,7 @@ AsyncPipeOp(async_op_t op, HANDLE pipe, LPVOID buffer, DWORD size, DWORD count, 
         handles[i + 1] = events[i];
     }
 
-    res = WaitForMultipleObjects(count + 1, handles, FALSE,
-                                 op == peek ? INFINITE : IO_TIMEOUT);
+    res = WaitForMultipleObjects(count + 1, handles, FALSE, op == peek ? INFINITE : IO_TIMEOUT);
     if (res != WAIT_OBJECT_0)
     {
         CancelIo(pipe);
@@ -326,32 +332,35 @@ ReturnError(HANDLE pipe, DWORD error, LPCWSTR func, DWORD count, LPHANDLE events
 {
     DWORD result_len;
     LPWSTR result = L"0xffffffff\nFormatMessage failed\nCould not return result";
-    DWORD_PTR args[] = {
-        (DWORD_PTR) error,
-        (DWORD_PTR) func,
-        (DWORD_PTR) ""
-    };
+    DWORD_PTR args[] = { (DWORD_PTR)error, (DWORD_PTR)func, (DWORD_PTR) "" };
 
     if (error != ERROR_OPENVPN_STARTUP)
     {
-        FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM
-                       |FORMAT_MESSAGE_ALLOCATE_BUFFER
-                       |FORMAT_MESSAGE_IGNORE_INSERTS,
-                       0, error, 0, (LPWSTR) &args[2], 0, NULL);
+        FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER
+                           | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       0,
+                       error,
+                       0,
+                       (LPWSTR)&args[2],
+                       0,
+                       NULL);
     }
 
-    result_len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING
-                                |FORMAT_MESSAGE_ALLOCATE_BUFFER
-                                |FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                                L"0x%1!08x!\n%2!s!\n%3!s!", 0, 0,
-                                (LPWSTR) &result, 0, (va_list *) args);
+    result_len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER
+                                    | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                                L"0x%1!08x!\n%2!s!\n%3!s!",
+                                0,
+                                0,
+                                (LPWSTR)&result,
+                                0,
+                                (va_list *)args);
 
     WritePipeAsync(pipe, result, (DWORD)(wcslen(result) * 2), count, events);
     MsgToEventLog(MSG_FLAGS_ERROR, result);
 
     if (error != ERROR_OPENVPN_STARTUP)
     {
-        LocalFree((LPVOID) args[2]);
+        LocalFree((LPVOID)args[2]);
     }
     if (result_len)
     {
@@ -372,7 +381,8 @@ ReturnLastError(HANDLE pipe, LPCWSTR func)
  * Returns true on success, false on error with reason set in errmsg.
  */
 static BOOL
-ValidateOptions(HANDLE pipe, const WCHAR *workdir, const WCHAR *options, WCHAR *errmsg, DWORD capacity)
+ValidateOptions(
+    HANDLE pipe, const WCHAR *workdir, const WCHAR *options, WCHAR *errmsg, DWORD capacity)
 {
     WCHAR **argv;
     int argc;
@@ -390,14 +400,15 @@ ValidateOptions(HANDLE pipe, const WCHAR *workdir, const WCHAR *options, WCHAR *
 
     if (!argv)
     {
-        swprintf(errmsg, capacity,
+        swprintf(errmsg,
+                 capacity,
                  L"Cannot validate options: CommandLineToArgvW failed with error = 0x%08x",
                  GetLastError());
         goto out;
     }
 
     /* Note: argv[0] is the first option */
-    if (argc < 1)  /* no options */
+    if (argc < 1) /* no options */
     {
         ret = TRUE;
         goto out;
@@ -412,8 +423,7 @@ ValidateOptions(HANDLE pipe, const WCHAR *workdir, const WCHAR *options, WCHAR *
 
         if (!CheckOption(workdir, 2, argv_tmp, &settings))
         {
-            swprintf(errmsg, capacity, msg1, argv[0], workdir,
-                     settings.ovpn_admin_group);
+            swprintf(errmsg, capacity, msg1, argv[0], workdir, settings.ovpn_admin_group);
         }
         goto out;
     }
@@ -425,17 +435,15 @@ ValidateOptions(HANDLE pipe, const WCHAR *workdir, const WCHAR *options, WCHAR *
             continue;
         }
 
-        if (!CheckOption(workdir, argc-i, &argv[i], &settings))
+        if (!CheckOption(workdir, argc - i, &argv[i], &settings))
         {
-            if (wcscmp(L"--config", argv[i]) == 0 && argc-i > 1)
+            if (wcscmp(L"--config", argv[i]) == 0 && argc - i > 1)
             {
-                swprintf(errmsg, capacity, msg1, argv[i+1], workdir,
-                         settings.ovpn_admin_group);
+                swprintf(errmsg, capacity, msg1, argv[i + 1], workdir, settings.ovpn_admin_group);
             }
             else
             {
-                swprintf(errmsg, capacity, msg2, argv[i],
-                         settings.ovpn_admin_group);
+                swprintf(errmsg, capacity, msg2, argv[i], settings.ovpn_admin_group);
             }
             goto out;
         }
@@ -522,7 +530,7 @@ GetStartupData(HANDLE pipe, STARTUP_DATA *sud)
     return TRUE;
 
 err:
-    sud->directory = NULL;              /* caller must not free() */
+    sud->directory = NULL; /* caller must not free() */
     free(data);
     return FALSE;
 }
@@ -597,7 +605,7 @@ HandleAddressMessage(address_message_t *msg, undo_lists_t *lists)
 
     InitializeUnicastIpAddressEntry(addr_row);
     addr_row->Address = sockaddr_inet(msg->family, &msg->address);
-    addr_row->OnLinkPrefixLength = (UINT8) msg->prefix_len;
+    addr_row->OnLinkPrefixLength = (UINT8)msg->prefix_len;
 
     if (msg->iface.index != -1)
     {
@@ -679,7 +687,7 @@ HandleRouteMessage(route_message_t *msg, undo_lists_t *lists)
     fwd_row->Protocol = MIB_IPPROTO_NETMGMT;
     fwd_row->Metric = msg->metric;
     fwd_row->DestinationPrefix.Prefix = sockaddr_inet(msg->family, &msg->prefix);
-    fwd_row->DestinationPrefix.PrefixLength = (UINT8) msg->prefix_len;
+    fwd_row->DestinationPrefix.PrefixLength = (UINT8)msg->prefix_len;
     fwd_row->NextHop = sockaddr_inet(msg->family, &msg->gateway);
 
     if (msg->iface.index != -1)
@@ -757,8 +765,13 @@ BlockDNSErrHandler(DWORD err, const char *msg)
     err_str = L"Unknown Win32 Error";
 
     if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM
-                      | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                      NULL, err, 0, buf, sizeof(buf), NULL))
+                          | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                      NULL,
+                      err,
+                      0,
+                      buf,
+                      sizeof(buf),
+                      NULL))
     {
         err_str = buf;
     }
@@ -784,13 +797,11 @@ DeleteWfpBlock(const wfp_block_message_t *msg, undo_lists_t *lists)
         err = delete_wfp_block_filters(block_data->engine);
         if (block_data->metric_v4 >= 0)
         {
-            set_interface_metric(msg->iface.index, AF_INET,
-                                 block_data->metric_v4);
+            set_interface_metric(msg->iface.index, AF_INET, block_data->metric_v4);
         }
         if (block_data->metric_v6 >= 0)
         {
-            set_interface_metric(msg->iface.index, AF_INET6,
-                                 block_data->metric_v6);
+            set_interface_metric(msg->iface.index, AF_INET6, block_data->metric_v6);
         }
         free(block_data);
     }
@@ -826,14 +837,12 @@ AddWfpBlock(const wfp_block_message_t *msg, undo_lists_t *lists)
         block_data->engine = engine;
         block_data->index = msg->iface.index;
         int is_auto = 0;
-        block_data->metric_v4 = get_interface_metric(msg->iface.index,
-                                                     AF_INET, &is_auto);
+        block_data->metric_v4 = get_interface_metric(msg->iface.index, AF_INET, &is_auto);
         if (is_auto)
         {
             block_data->metric_v4 = 0;
         }
-        block_data->metric_v6 = get_interface_metric(msg->iface.index,
-                                                     AF_INET6, &is_auto);
+        block_data->metric_v6 = get_interface_metric(msg->iface.index, AF_INET6, &is_auto);
         if (is_auto)
         {
             block_data->metric_v6 = 0;
@@ -842,8 +851,7 @@ AddWfpBlock(const wfp_block_message_t *msg, undo_lists_t *lists)
         err = AddListItem(&(*lists)[wfp_block], block_data);
         if (!err)
         {
-            err = set_interface_metric(msg->iface.index, AF_INET,
-                                       WFP_BLOCK_IFACE_METRIC);
+            err = set_interface_metric(msg->iface.index, AF_INET, WFP_BLOCK_IFACE_METRIC);
             if (!err)
             {
                 /* for IPv6, we intentionally ignore errors, because
@@ -851,8 +859,7 @@ AddWfpBlock(const wfp_block_message_t *msg, undo_lists_t *lists)
                  * admin has disabled IPv6 on the tun/tap/dco interface
                  * (if OpenVPN wants IPv6 ifconfig, we'll fail there)
                  */
-                set_interface_metric(msg->iface.index, AF_INET6,
-                                     WFP_BLOCK_IFACE_METRIC);
+                set_interface_metric(msg->iface.index, AF_INET6, WFP_BLOCK_IFACE_METRIC);
             }
             if (err)
             {
@@ -897,7 +904,7 @@ ExecCommand(const WCHAR *argv0, const WCHAR *cmdline, DWORD timeout)
     DWORD exit_code;
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
-    DWORD proc_flags = CREATE_NO_WINDOW|CREATE_UNICODE_ENVIRONMENT;
+    DWORD proc_flags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
     WCHAR *cmdline_dup = NULL;
 
     ZeroMemory(&si, sizeof(si));
@@ -907,8 +914,8 @@ ExecCommand(const WCHAR *argv0, const WCHAR *cmdline, DWORD timeout)
 
     /* CreateProcess needs a modifiable cmdline: make a copy */
     cmdline_dup = _wcsdup(cmdline);
-    if (cmdline_dup && CreateProcessW(argv0, cmdline_dup, NULL, NULL, FALSE,
-                                      proc_flags, NULL, NULL, &si, &pi) )
+    if (cmdline_dup
+        && CreateProcessW(argv0, cmdline_dup, NULL, NULL, FALSE, proc_flags, NULL, NULL, &si, &pi))
     {
         WaitForSingleObject(pi.hProcess, timeout ? timeout : INFINITE);
         if (!GetExitCodeProcess(pi.hProcess, &exit_code))
@@ -922,13 +929,15 @@ ExecCommand(const WCHAR *argv0, const WCHAR *cmdline, DWORD timeout)
 
             /* kill without impunity */
             TerminateProcess(pi.hProcess, exit_code);
-            MsgToEventLog(M_ERR, L"ExecCommand: \"%ls %ls\" killed after timeout",
-                          argv0, cmdline);
+            MsgToEventLog(M_ERR, L"ExecCommand: \"%ls %ls\" killed after timeout", argv0, cmdline);
         }
         else if (exit_code)
         {
-            MsgToEventLog(M_ERR, L"ExecCommand: \"%ls %ls\" exited with status = %lu",
-                          argv0, cmdline, exit_code);
+            MsgToEventLog(M_ERR,
+                          L"ExecCommand: \"%ls %ls\" exited with status = %lu",
+                          argv0,
+                          cmdline,
+                          exit_code);
         }
         else
         {
@@ -941,8 +950,7 @@ ExecCommand(const WCHAR *argv0, const WCHAR *cmdline, DWORD timeout)
     else
     {
         exit_code = GetLastError();
-        MsgToEventLog(M_SYSERR, L"ExecCommand: could not run \"%ls %ls\" :",
-                      argv0, cmdline);
+        MsgToEventLog(M_SYSERR, L"ExecCommand: could not run \"%ls %ls\" :", argv0, cmdline);
     }
 
     free(cmdline_dup);
@@ -967,12 +975,12 @@ RegisterDNS(LPVOID unused)
         WCHAR *argv0;
         WCHAR *cmdline;
         DWORD timeout;
-    } cmds [] = {
-        { ipcfg, L"ipconfig /flushdns",    timeout },
+    } cmds[] = {
+        { ipcfg, L"ipconfig /flushdns", timeout },
         { ipcfg, L"ipconfig /registerdns", timeout },
     };
 
-    HANDLE wait_handles[2] = {rdns_semaphore, exit_event};
+    HANDLE wait_handles[2] = { rdns_semaphore, exit_event };
 
     swprintf(ipcfg, MAX_PATH, L"%ls\\%ls", get_win_sys_path(), L"ipconfig.exe");
 
@@ -984,9 +992,10 @@ RegisterDNS(LPVOID unused)
             ExecCommand(cmds[i].argv0, cmds[i].cmdline, cmds[i].timeout);
         }
         err = 0;
-        if (!ReleaseSemaphore(rdns_semaphore, 1, NULL) )
+        if (!ReleaseSemaphore(rdns_semaphore, 1, NULL))
         {
-            err = MsgToEventLog(M_SYSERR, L"RegisterDNS: Failed to release regsiter-dns semaphore:");
+            err =
+                MsgToEventLog(M_SYSERR, L"RegisterDNS: Failed to release regsiter-dns semaphore:");
         }
     }
     else
@@ -1063,7 +1072,7 @@ netsh_wins_cmd(const wchar_t *action, const wchar_t *if_name, const wchar_t *add
 
     /* max cmdline length in wchars -- include room for worst case and some */
     size_t ncmdline = wcslen(fmt) + wcslen(if_name) + wcslen(action) + wcslen(addr)
-                      +wcslen(addr_static) + 32 + 1;
+                      + wcslen(addr_static) + 32 + 1;
     cmdline = malloc(ncmdline * sizeof(wchar_t));
     if (!cmdline)
     {
@@ -1095,13 +1104,12 @@ CmpWString(LPVOID item, LPVOID str)
 static BOOL
 ApplyGpolSettings32(void)
 {
-    typedef NTSTATUS (__stdcall *publish_fn_t)(
-        DWORD StateNameLo,
-        DWORD StateNameHi,
-        DWORD TypeId,
-        DWORD Buffer,
-        DWORD Length,
-        DWORD ExplicitScope);
+    typedef NTSTATUS(__stdcall * publish_fn_t)(DWORD StateNameLo,
+                                               DWORD StateNameHi,
+                                               DWORD TypeId,
+                                               DWORD Buffer,
+                                               DWORD Length,
+                                               DWORD ExplicitScope);
     publish_fn_t RtlPublishWnfStateData;
     const DWORD WNF_GPOL_SYSTEM_CHANGES_HI = 0x0D891E2A;
     const DWORD WNF_GPOL_SYSTEM_CHANGES_LO = 0xA3BC0875;
@@ -1112,13 +1120,14 @@ ApplyGpolSettings32(void)
         return FALSE;
     }
 
-    RtlPublishWnfStateData = (publish_fn_t) GetProcAddress(ntdll, "RtlPublishWnfStateData");
+    RtlPublishWnfStateData = (publish_fn_t)GetProcAddress(ntdll, "RtlPublishWnfStateData");
     if (RtlPublishWnfStateData == NULL)
     {
         return FALSE;
     }
 
-    if (RtlPublishWnfStateData(WNF_GPOL_SYSTEM_CHANGES_LO, WNF_GPOL_SYSTEM_CHANGES_HI, 0, 0, 0, 0) != ERROR_SUCCESS)
+    if (RtlPublishWnfStateData(WNF_GPOL_SYSTEM_CHANGES_LO, WNF_GPOL_SYSTEM_CHANGES_HI, 0, 0, 0, 0)
+        != ERROR_SUCCESS)
     {
         return FALSE;
     }
@@ -1136,11 +1145,7 @@ static BOOL
 ApplyGpolSettings64(void)
 {
     typedef NTSTATUS (*publish_fn_t)(
-        INT64 StateName,
-        INT64 TypeId,
-        INT64 Buffer,
-        unsigned int Length,
-        INT64 ExplicitScope);
+        INT64 StateName, INT64 TypeId, INT64 Buffer, unsigned int Length, INT64 ExplicitScope);
     publish_fn_t RtlPublishWnfStateData;
     const INT64 WNF_GPOL_SYSTEM_CHANGES = 0x0D891E2AA3BC0875;
 
@@ -1150,7 +1155,7 @@ ApplyGpolSettings64(void)
         return FALSE;
     }
 
-    RtlPublishWnfStateData = (publish_fn_t) GetProcAddress(ntdll, "RtlPublishWnfStateData");
+    RtlPublishWnfStateData = (publish_fn_t)GetProcAddress(ntdll, "RtlPublishWnfStateData");
     if (RtlPublishWnfStateData == NULL)
     {
         return FALSE;
@@ -1200,24 +1205,21 @@ ApplyDnsSettings(BOOL apply_gpol)
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (scm == NULL)
     {
-        MsgToEventLog(M_ERR, L"%s: OpenSCManager call failed (%lu)",
-                      __func__, GetLastError());
+        MsgToEventLog(M_ERR, L"%s: OpenSCManager call failed (%lu)", __func__, GetLastError());
         goto out;
     }
 
     dnssvc = OpenServiceA(scm, "Dnscache", SERVICE_PAUSE_CONTINUE);
     if (dnssvc == NULL)
     {
-        MsgToEventLog(M_ERR, L"%s: OpenService call failed (%lu)",
-                      __func__, GetLastError());
+        MsgToEventLog(M_ERR, L"%s: OpenService call failed (%lu)", __func__, GetLastError());
         goto out;
     }
 
     SERVICE_STATUS status;
     if (ControlService(dnssvc, SERVICE_CONTROL_PARAMCHANGE, &status) == 0)
     {
-        MsgToEventLog(M_ERR, L"%s: ControlService call failed (%lu)",
-                      __func__, GetLastError());
+        MsgToEventLog(M_ERR, L"%s: ControlService call failed (%lu)", __func__, GetLastError());
         goto out;
     }
 
@@ -1347,7 +1349,9 @@ GetDnsSearchListKey(PCSTR itf_name, PBOOL gpol, PHKEY key)
     /* Try the group policy search list */
     err = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
                         "SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient",
-                        0, KEY_ALL_ACCESS, key);
+                        0,
+                        KEY_ALL_ACCESS,
+                        key);
     if (!err)
     {
         if (HasValidSearchList(*key))
@@ -1361,7 +1365,9 @@ GetDnsSearchListKey(PCSTR itf_name, PBOOL gpol, PHKEY key)
     /* Try the system-wide search list */
     err = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
                         "System\\CurrentControlSet\\Services\\TCPIP\\Parameters",
-                        0, KEY_ALL_ACCESS, key);
+                        0,
+                        KEY_ALL_ACCESS,
+                        key);
     if (!err)
     {
         if (HasValidSearchList(*key))
@@ -1379,9 +1385,12 @@ GetDnsSearchListKey(PCSTR itf_name, PBOOL gpol, PHKEY key)
         if (!iid_err)
         {
             HKEY itfs;
-            err = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                                "System\\CurrentControlSet\\Services\\TCPIP\\Parameters\\Interfaces",
-                                0, KEY_ALL_ACCESS, &itfs);
+            err =
+                RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                              "System\\CurrentControlSet\\Services\\TCPIP\\Parameters\\Interfaces",
+                              0,
+                              KEY_ALL_ACCESS,
+                              &itfs);
             if (!err)
             {
                 err = RegOpenKeyExW(itfs, iid, 0, KEY_ALL_ACCESS, key);
@@ -1417,8 +1426,7 @@ InitialSearchListExists(HKEY key)
         {
             return FALSE;
         }
-        MsgToEventLog(M_ERR, L"%s: failed to get InitialSearchList (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_ERR, L"%s: failed to get InitialSearchList (%lu)", __func__, err);
     }
 
     return TRUE;
@@ -1453,8 +1461,7 @@ StoreInitialDnsSearchList(HKEY key, PCWSTR list)
     LSTATUS err = RegSetValueExW(key, L"InitialSearchList", 0, REG_SZ, (PBYTE)list, size);
     if (err)
     {
-        MsgToEventLog(M_ERR, L"%s: failed to set InitialSearchList value (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_ERR, L"%s: failed to set InitialSearchList value (%lu)", __func__, err);
         return FALSE;
     }
 
@@ -1474,7 +1481,7 @@ static BOOL
 AddDnsSearchDomains(HKEY key, BOOL have_list, PCWSTR domains)
 {
     LSTATUS err;
-    WCHAR list[2048] = {0};
+    WCHAR list[2048] = { 0 };
     DWORD size = sizeof(list);
 
     if (have_list)
@@ -1482,8 +1489,8 @@ AddDnsSearchDomains(HKEY key, BOOL have_list, PCWSTR domains)
         err = RegGetValueW(key, NULL, L"SearchList", RRF_RT_REG_SZ, NULL, list, &size);
         if (err)
         {
-            MsgToEventLog(M_SYSERR, L"%s: could not get SearchList from registry (%lu)",
-                          __func__, err);
+            MsgToEventLog(
+                M_SYSERR, L"%s: could not get SearchList from registry (%lu)", __func__, err);
             return FALSE;
         }
 
@@ -1496,8 +1503,10 @@ AddDnsSearchDomains(HKEY key, BOOL have_list, PCWSTR domains)
         size_t domlen = wcslen(domains);
         if (listlen + domlen + 2 > _countof(list))
         {
-            MsgToEventLog(M_SYSERR, L"%s: not enough space in list for search domains (len=%lu)",
-                          __func__, domlen);
+            MsgToEventLog(M_SYSERR,
+                          L"%s: not enough space in list for search domains (len=%lu)",
+                          __func__,
+                          domlen);
             return FALSE;
         }
 
@@ -1515,8 +1524,7 @@ AddDnsSearchDomains(HKEY key, BOOL have_list, PCWSTR domains)
     err = RegSetValueExW(key, L"SearchList", 0, REG_SZ, (PBYTE)list, size);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList to registry (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList to registry (%lu)", __func__, err);
         return FALSE;
     }
 
@@ -1547,8 +1555,10 @@ ResetDnsSearchDomains(HKEY key)
     {
         if (err != ERROR_FILE_NOT_FOUND)
         {
-            MsgToEventLog(M_SYSERR, L"%s: could not get InitialSearchList from registry (%lu)",
-                          __func__, err);
+            MsgToEventLog(M_SYSERR,
+                          L"%s: could not get InitialSearchList from registry (%lu)",
+                          __func__,
+                          err);
         }
         goto out;
     }
@@ -1557,8 +1567,7 @@ ResetDnsSearchDomains(HKEY key)
     err = RegSetValueExW(key, L"SearchList", 0, REG_SZ, (PBYTE)list, size);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList in registry (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList in registry (%lu)", __func__, err);
         goto out;
     }
 
@@ -1585,8 +1594,7 @@ RemoveDnsSearchDomains(HKEY key, PCWSTR domains)
     err = RegGetValueW(key, NULL, L"SearchList", RRF_RT_REG_SZ, NULL, list, &size);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not get SearchList from registry (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_SYSERR, L"%s: could not get SearchList from registry (%lu)", __func__, err);
         return;
     }
 
@@ -1613,8 +1621,10 @@ RemoveDnsSearchDomains(HKEY key, PCWSTR domains)
         err = RegGetValueW(key, NULL, L"InitialSearchList", RRF_RT_REG_SZ, NULL, initial, &size);
         if (err)
         {
-            MsgToEventLog(M_SYSERR, L"%s: could not get InitialSearchList from registry (%lu)",
-                          __func__, err);
+            MsgToEventLog(M_SYSERR,
+                          L"%s: could not get InitialSearchList from registry (%lu)",
+                          __func__,
+                          err);
             return;
         }
 
@@ -1630,8 +1640,7 @@ RemoveDnsSearchDomains(HKEY key, PCWSTR domains)
     err = RegSetValueExW(key, L"SearchList", 0, REG_SZ, (PBYTE)list, size);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList in registry (%lu)",
-                      __func__, err);
+        MsgToEventLog(M_SYSERR, L"%s: could not set SearchList in registry (%lu)", __func__, err);
     }
 }
 
@@ -1749,15 +1758,18 @@ static BOOL
 GetInterfacesKey(short family, PHKEY key)
 {
     PCSTR itfs_key = family == AF_INET6
-        ? "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters\\Interfaces"
-        : "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces";
+                         ? "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters\\Interfaces"
+                         : "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces";
 
     LSTATUS err = RegOpenKeyExA(HKEY_LOCAL_MACHINE, itfs_key, 0, KEY_ALL_ACCESS, key);
     if (err)
     {
         *key = INVALID_HANDLE_VALUE;
-        MsgToEventLog(M_SYSERR, L"%s: could not open interfaces registry key for family %d (%lu)",
-                      __func__, family, err);
+        MsgToEventLog(M_SYSERR,
+                      L"%s: could not open interfaces registry key for family %d (%lu)",
+                      __func__,
+                      family,
+                      err);
     }
 
     return err ? FALSE : TRUE;
@@ -1787,16 +1799,25 @@ SetNameServersValue(PCWSTR itf_id, short family, PCSTR value)
     err = RegOpenKeyExW(itfs, itf_id, 0, KEY_ALL_ACCESS, &itf);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not open interface key for %s family %d (%lu)",
-                      __func__, itf_id, family, err);
+        MsgToEventLog(M_SYSERR,
+                      L"%s: could not open interface key for %s family %d (%lu)",
+                      __func__,
+                      itf_id,
+                      family,
+                      err);
         goto out;
     }
 
     err = RegSetValueExA(itf, "NameServer", 0, REG_SZ, (PBYTE)value, strlen(value) + 1);
     if (err)
     {
-        MsgToEventLog(M_SYSERR, L"%s: could not set name servers '%S' for %s family %d (%lu)",
-                      __func__, value, itf_id, family, err);
+        MsgToEventLog(M_SYSERR,
+                      L"%s: could not set name servers '%S' for %s family %d (%lu)",
+                      __func__,
+                      value,
+                      itf_id,
+                      family,
+                      err);
     }
 
 out:
@@ -1858,11 +1879,12 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
         return ERROR_MESSAGE_DATA;
     }
 
-    /* use a non-const reference with limited scope to enforce null-termination of strings from client */
+    /* use a non-const reference with limited scope to enforce null-termination of strings from
+     * client */
     {
-        dns_cfg_message_t *msgptr = (dns_cfg_message_t *) msg;
-        msgptr->iface.name[_countof(msg->iface.name)-1] = '\0';
-        msgptr->domains[_countof(msg->domains)-1] = '\0';
+        dns_cfg_message_t *msgptr = (dns_cfg_message_t *)msg;
+        msgptr->iface.name[_countof(msg->iface.name) - 1] = '\0';
+        msgptr->domains[_countof(msg->domains) - 1] = '\0';
     }
 
     WCHAR iid[64];
@@ -1894,7 +1916,7 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
             err = SetDnsSearchDomains(msg->iface.name, NULL, &gpol, lists);
         }
         ApplyDnsSettings(gpol);
-        return err;  /* job done */
+        return err; /* job done */
     }
 
     if (msg->addr_len > 0)
@@ -1962,7 +1984,8 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
         return ERROR_MESSAGE_DATA;
     }
 
-    /* use a non-const reference with limited scope to enforce null-termination of strings from client */
+    /* use a non-const reference with limited scope to enforce null-termination of strings from
+     * client */
     {
         wins_cfg_message_t *msgptr = (wins_cfg_message_t *)msg;
         msgptr->iface.name[_countof(msg->iface.name) - 1] = '\0';
@@ -1989,7 +2012,7 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
 
     if (msg->header.type == msg_del_wins_cfg)
     {
-        goto out;  /* job done */
+        goto out; /* job done */
     }
 
     for (int i = 0; i < addr_len; ++i)
@@ -2043,7 +2066,7 @@ HandleEnableDHCPMessage(const enable_dhcp_message_t *dhcp)
      * 10 chars for 32 bit int in decimal and +1 for NUL
      */
     size_t ncmdline = wcslen(fmt) + 10 + 1;
-    wchar_t *cmdline = malloc(ncmdline*sizeof(wchar_t));
+    wchar_t *cmdline = malloc(ncmdline * sizeof(wchar_t));
     if (!cmdline)
     {
         err = ERROR_OUTOFMEMORY;
@@ -2067,7 +2090,13 @@ OvpnDuplicateHandle(HANDLE ovpn_proc, HANDLE orig_handle, HANDLE *new_handle)
 {
     DWORD err = ERROR_SUCCESS;
 
-    if (!DuplicateHandle(ovpn_proc, orig_handle, GetCurrentProcess(), new_handle, 0, FALSE, DUPLICATE_SAME_ACCESS))
+    if (!DuplicateHandle(ovpn_proc,
+                         orig_handle,
+                         GetCurrentProcess(),
+                         new_handle,
+                         0,
+                         FALSE,
+                         DUPLICATE_SAME_ACCESS))
     {
         err = GetLastError();
         MsgToEventLog(M_SYSERR, L"Could not duplicate handle");
@@ -2089,7 +2118,8 @@ DuplicateAndMapRing(HANDLE ovpn_proc, HANDLE orig_handle, struct tun_ring **ring
     {
         return err;
     }
-    *ring = (struct tun_ring *)MapViewOfFile(dup_handle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(struct tun_ring));
+    *ring = (struct tun_ring *)MapViewOfFile(
+        dup_handle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(struct tun_ring));
     CloseHandleEx(&dup_handle);
     if (*ring == NULL)
     {
@@ -2102,12 +2132,14 @@ DuplicateAndMapRing(HANDLE ovpn_proc, HANDLE orig_handle, struct tun_ring **ring
 }
 
 static DWORD
-HandleRegisterRingBuffers(const register_ring_buffers_message_t *rrb, HANDLE ovpn_proc,
+HandleRegisterRingBuffers(const register_ring_buffers_message_t *rrb,
+                          HANDLE ovpn_proc,
                           undo_lists_t *lists)
 {
     DWORD err = 0;
 
-    ring_buffer_maps_t *ring_buffer_maps = RemoveListItem(&(*lists)[undo_ring_buffer], CmpAny, NULL);
+    ring_buffer_maps_t *ring_buffer_maps =
+        RemoveListItem(&(*lists)[undo_ring_buffer], CmpAny, NULL);
 
     if (ring_buffer_maps)
     {
@@ -2152,9 +2184,11 @@ HandleRegisterRingBuffers(const register_ring_buffers_message_t *rrb, HANDLE ovp
         goto out;
     }
 
-    if (!register_ring_buffers(device, ring_buffer_maps->send_ring,
+    if (!register_ring_buffers(device,
+                               ring_buffer_maps->send_ring,
                                ring_buffer_maps->receive_ring,
-                               send_tail_moved, receive_tail_moved))
+                               send_tail_moved,
+                               receive_tail_moved))
     {
         err = GetLastError();
         MsgToEventLog(M_SYSERR, L"Could not register ring buffers");
@@ -2199,16 +2233,12 @@ HandleMTUMessage(const set_mtu_message_t *mtu)
 }
 
 static VOID
-HandleMessage(HANDLE pipe, HANDLE ovpn_proc,
-              DWORD bytes, DWORD count, LPHANDLE events, undo_lists_t *lists)
+HandleMessage(
+    HANDLE pipe, HANDLE ovpn_proc, DWORD bytes, DWORD count, LPHANDLE events, undo_lists_t *lists)
 {
     pipe_message_t msg;
     ack_message_t ack = {
-        .header = {
-            .type = msg_acknowledgement,
-            .size = sizeof(ack),
-            .message_id = -1
-        },
+        .header = { .type = msg_acknowledgement, .size = sizeof(ack), .message_id = -1 },
         .error_number = ERROR_MESSAGE_DATA
     };
 
@@ -2341,13 +2371,13 @@ Undo(undo_lists_t *lists)
                     delete_wfp_block_filters(interface_data->engine);
                     if (interface_data->metric_v4 >= 0)
                     {
-                        set_interface_metric(interface_data->index, AF_INET,
-                                             interface_data->metric_v4);
+                        set_interface_metric(
+                            interface_data->index, AF_INET, interface_data->metric_v4);
                     }
                     if (interface_data->metric_v6 >= 0)
                     {
-                        set_interface_metric(interface_data->index, AF_INET6,
-                                             interface_data->metric_v6);
+                        set_interface_metric(
+                            interface_data->index, AF_INET6, interface_data->metric_v6);
                     }
                     break;
 
@@ -2382,27 +2412,24 @@ RunOpenvpn(LPVOID p)
     STARTUPINFOW startup_info;
     PROCESS_INFORMATION proc_info;
     LPVOID user_env = NULL;
-    WCHAR ovpn_pipe_name[256]; /* The entire pipe name string can be up to 256 characters long according to MSDN. */
+    WCHAR ovpn_pipe_name[256]; /* The entire pipe name string can be up to 256 characters long
+                                  according to MSDN. */
     LPCWSTR exe_path;
     WCHAR *cmdline = NULL;
     size_t cmdline_size;
     undo_lists_t undo_lists;
     WCHAR errmsg[512] = L"";
 
-    SECURITY_ATTRIBUTES inheritable = {
-        .nLength = sizeof(inheritable),
-        .lpSecurityDescriptor = NULL,
-        .bInheritHandle = TRUE
-    };
+    SECURITY_ATTRIBUTES inheritable = { .nLength = sizeof(inheritable),
+                                        .lpSecurityDescriptor = NULL,
+                                        .bInheritHandle = TRUE };
 
     PACL ovpn_dacl;
     EXPLICIT_ACCESS ea[2];
     SECURITY_DESCRIPTOR ovpn_sd;
-    SECURITY_ATTRIBUTES ovpn_sa = {
-        .nLength = sizeof(ovpn_sa),
-        .lpSecurityDescriptor = &ovpn_sd,
-        .bInheritHandle = FALSE
-    };
+    SECURITY_ATTRIBUTES ovpn_sa = { .nLength = sizeof(ovpn_sa),
+                                    .lpSecurityDescriptor = &ovpn_sd,
+                                    .bInheritHandle = FALSE };
 
     ZeroMemory(&ea, sizeof(ea));
     ZeroMemory(&startup_info, sizeof(startup_info));
@@ -2500,14 +2527,14 @@ RunOpenvpn(LPVOID p)
     ea[0].grfInheritance = NO_INHERITANCE;
     ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
     ea[0].Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
-    ea[0].Trustee.ptstrName = (LPWSTR) svc_user->User.Sid;
-    ea[1].grfAccessPermissions = READ_CONTROL | SYNCHRONIZE | PROCESS_VM_READ
-                                 |SYNCHRONIZE | PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION;
+    ea[0].Trustee.ptstrName = (LPWSTR)svc_user->User.Sid;
+    ea[1].grfAccessPermissions = READ_CONTROL | SYNCHRONIZE | PROCESS_VM_READ | SYNCHRONIZE
+                                 | PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION;
     ea[1].grfAccessMode = SET_ACCESS;
     ea[1].grfInheritance = NO_INHERITANCE;
     ea[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
     ea[1].Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
-    ea[1].Trustee.ptstrName = (LPWSTR) ovpn_user->User.Sid;
+    ea[1].Trustee.ptstrName = (LPWSTR)ovpn_user->User.Sid;
 
     /* Set owner and DACL of OpenVPN security descriptor */
     if (!SetSecurityDescriptorOwner(&ovpn_sd, svc_user->User.Sid, FALSE))
@@ -2534,8 +2561,8 @@ RunOpenvpn(LPVOID p)
     }
 
     /* use /dev/null for stdout of openvpn (client should use --log for output) */
-    stdout_write = CreateFile(_L("NUL"), GENERIC_WRITE, FILE_SHARE_WRITE,
-                              &inheritable, OPEN_EXISTING, 0, NULL);
+    stdout_write = CreateFile(
+        _L("NUL"), GENERIC_WRITE, FILE_SHARE_WRITE, &inheritable, OPEN_EXISTING, 0, NULL);
     if (stdout_write == INVALID_HANDLE_VALUE)
     {
         ReturnLastError(pipe, L"CreateFile for stdout");
@@ -2549,19 +2576,28 @@ RunOpenvpn(LPVOID p)
         goto out;
     }
 
-    swprintf(ovpn_pipe_name, _countof(ovpn_pipe_name),
-             L"\\\\.\\pipe\\" _L(PACKAGE) L"%ls\\service_%lu", service_instance, GetCurrentThreadId());
-    ovpn_pipe = CreateNamedPipe(ovpn_pipe_name,
-                                PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
-                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 1, 128, 128, 0, NULL);
+    swprintf(ovpn_pipe_name,
+             _countof(ovpn_pipe_name),
+             L"\\\\.\\pipe\\" _L(PACKAGE) L"%ls\\service_%lu",
+             service_instance,
+             GetCurrentThreadId());
+    ovpn_pipe =
+        CreateNamedPipe(ovpn_pipe_name,
+                        PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
+                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                        1,
+                        128,
+                        128,
+                        0,
+                        NULL);
     if (ovpn_pipe == INVALID_HANDLE_VALUE)
     {
         ReturnLastError(pipe, L"CreateNamedPipe");
         goto out;
     }
 
-    svc_pipe = CreateFile(ovpn_pipe_name, GENERIC_READ | GENERIC_WRITE, 0,
-                          &inheritable, OPEN_EXISTING, 0, NULL);
+    svc_pipe = CreateFile(
+        ovpn_pipe_name, GENERIC_READ | GENERIC_WRITE, 0, &inheritable, OPEN_EXISTING, 0, NULL);
     if (svc_pipe == INVALID_HANDLE_VALUE)
     {
         ReturnLastError(pipe, L"CreateFile");
@@ -2585,8 +2621,11 @@ RunOpenvpn(LPVOID p)
     /* there seem to be no common printf specifier that works on all
      * mingw/msvc platforms without trickery, so convert to void* and use
      * PRIuPTR to print that as best compromise */
-    swprintf(cmdline, cmdline_size, L"openvpn %ls --msg-channel %" PRIuPTR,
-             sud.options, (uintptr_t)svc_pipe);
+    swprintf(cmdline,
+             cmdline_size,
+             L"openvpn %ls --msg-channel %" PRIuPTR,
+             sud.options,
+             (uintptr_t)svc_pipe);
 
     if (!CreateEnvironmentBlock(&user_env, imp_token, FALSE))
     {
@@ -2603,9 +2642,17 @@ RunOpenvpn(LPVOID p)
     exe_path = settings.exe_path;
 
     /* TODO: make sure HKCU is correct or call LoadUserProfile() */
-    if (!CreateProcessAsUserW(pri_token, exe_path, cmdline, &ovpn_sa, NULL, TRUE,
+    if (!CreateProcessAsUserW(pri_token,
+                              exe_path,
+                              cmdline,
+                              &ovpn_sa,
+                              NULL,
+                              TRUE,
                               settings.priority | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
-                              user_env, sud.directory, &startup_info, &proc_info))
+                              user_env,
+                              sud.directory,
+                              &startup_info,
+                              &proc_info))
     {
         ReturnLastError(pipe, L"CreateProcessAsUser");
         goto out;
@@ -2645,7 +2692,10 @@ RunOpenvpn(LPVOID p)
         if (bytes > sizeof(pipe_message_t))
         {
             /* process at the other side of the pipe is misbehaving, shut it down */
-            MsgToEventLog(MSG_FLAGS_ERROR, L"OpenVPN process sent too large payload length to the pipe (%lu bytes), it will be terminated", bytes);
+            MsgToEventLog(
+                MSG_FLAGS_ERROR,
+                L"OpenVPN process sent too large payload length to the pipe (%lu bytes), it will be terminated",
+                bytes);
             break;
         }
 
@@ -2661,8 +2711,7 @@ RunOpenvpn(LPVOID p)
     else if (exit_code != 0)
     {
         WCHAR buf[256];
-        swprintf(buf, _countof(buf),
-                 L"OpenVPN exited with error: exit code = %lu", exit_code);
+        swprintf(buf, _countof(buf), L"OpenVPN exited with error: exit code = %lu", exit_code);
         ReturnError(pipe, ERROR_OPENVPN_STARTUP, buf, 1, &exit_event);
     }
     Undo(&undo_lists);
@@ -2725,17 +2774,19 @@ CreateClientPipeInstance(VOID)
      * allow read/write for authenticated users
      * deny all access to anonymous
      */
-    const WCHAR *sddlString = L"D:(A;OICI;GA;;;S-1-5-18)(D;OICI;0x4;;;S-1-1-0)(A;OICI;GRGW;;;S-1-5-11)(D;;GA;;;S-1-5-7)";
+    const WCHAR *sddlString =
+        L"D:(A;OICI;GA;;;S-1-5-18)(D;OICI;0x4;;;S-1-1-0)(A;OICI;GRGW;;;S-1-5-11)(D;;GA;;;S-1-5-7)";
 
     PSECURITY_DESCRIPTOR sd = NULL;
-    if (!ConvertStringSecurityDescriptorToSecurityDescriptor(sddlString, SDDL_REVISION_1, &sd, NULL))
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptor(
+            sddlString, SDDL_REVISION_1, &sd, NULL))
     {
         MsgToEventLog(M_SYSERR, L"ConvertStringSecurityDescriptorToSecurityDescriptor failed.");
         return INVALID_HANDLE_VALUE;
     }
 
     /* Set up SECURITY_ATTRIBUTES */
-    SECURITY_ATTRIBUTES sa = {0};
+    SECURITY_ATTRIBUTES sa = { 0 };
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.lpSecurityDescriptor = sd;
     sa.bInheritHandle = FALSE;
@@ -2749,11 +2800,21 @@ CreateClientPipeInstance(VOID)
         first = FALSE;
     }
 
-    WCHAR pipe_name[256]; /* The entire pipe name string can be up to 256 characters long according to MSDN. */
-    swprintf(pipe_name, _countof(pipe_name), L"\\\\.\\pipe\\" _L(PACKAGE) L"%ls\\service", service_instance);
-    HANDLE pipe = CreateNamedPipe(pipe_name, flags,
-                                  PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
-                                  PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, &sa);
+    WCHAR pipe_name[256]; /* The entire pipe name string can be up to 256 characters long according
+                             to MSDN. */
+    swprintf(pipe_name,
+             _countof(pipe_name),
+             L"\\\\.\\pipe\\" _L(PACKAGE) L"%ls\\service",
+             service_instance);
+    HANDLE pipe =
+        CreateNamedPipe(pipe_name,
+                        flags,
+                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
+                        PIPE_UNLIMITED_INSTANCES,
+                        1024,
+                        1024,
+                        0,
+                        &sa);
 
     LocalFree(sd);
 
@@ -2768,8 +2829,8 @@ CreateClientPipeInstance(VOID)
 
 
 static DWORD
-UpdateWaitHandles(LPHANDLE *handles_ptr, LPDWORD count,
-                  HANDLE io_event, HANDLE exit_event, list_item_t *threads)
+UpdateWaitHandles(
+    LPHANDLE *handles_ptr, LPDWORD count, HANDLE io_event, HANDLE exit_event, list_item_t *threads)
 {
     static DWORD size = 10;
     static LPHANDLE handles = NULL;
@@ -2876,7 +2937,8 @@ ServiceStartInteractive(DWORD dwArgc, LPWSTR *lpszArgv)
     PHANDLE handles = NULL;
     DWORD handle_count;
 
-    service = RegisterServiceCtrlHandlerEx(interactive_service.name, ServiceCtrlInteractive, &status);
+    service =
+        RegisterServiceCtrlHandlerEx(interactive_service.name, ServiceCtrlInteractive, &status);
     if (!service)
     {
         return;
@@ -2931,8 +2993,7 @@ ServiceStartInteractive(DWORD dwArgc, LPWSTR *lpszArgv)
 
     while (TRUE)
     {
-        if (ConnectNamedPipe(pipe, &overlapped) == FALSE
-            && GetLastError() != ERROR_PIPE_CONNECTED
+        if (ConnectNamedPipe(pipe, &overlapped) == FALSE && GetLastError() != ERROR_PIPE_CONNECTED
             && GetLastError() != ERROR_IO_PENDING)
         {
             MsgToEventLog(M_SYSERR, L"Could not connect pipe");
@@ -2950,11 +3011,16 @@ ServiceStartInteractive(DWORD dwArgc, LPWSTR *lpszArgv)
                 error = AddListItem(&threads, thread);
                 if (!error)
                 {
-                    error = UpdateWaitHandles(&handles, &handle_count, io_event, exit_event, threads);
+                    error =
+                        UpdateWaitHandles(&handles, &handle_count, io_event, exit_event, threads);
                 }
                 if (error)
                 {
-                    ReturnError(pipe, error, L"Insufficient resources to service new clients", 1, &exit_event);
+                    ReturnError(pipe,
+                                error,
+                                L"Insufficient resources to service new clients",
+                                1,
+                                &exit_event);
                     /* Update wait handles again after removing the last worker thread */
                     RemoveListItem(&threads, CmpHandle, thread);
                     UpdateWaitHandles(&handles, &handle_count, io_event, exit_event, threads);

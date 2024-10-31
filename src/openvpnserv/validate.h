@@ -29,14 +29,12 @@
 
 /* Authorized groups who can use any options and config locations */
 #define SYSTEM_ADMIN_GROUP L"Administrators"
-#define OVPN_ADMIN_GROUP L"OpenVPN Administrators"
+#define OVPN_ADMIN_GROUP   L"OpenVPN Administrators"
 /* The last one may be reset in registry: HKLM\Software\OpenVPN\ovpn_admin_group */
 
-BOOL
-IsAuthorizedUser(PSID sid, const HANDLE token, const WCHAR *ovpn_admin_group);
+BOOL IsAuthorizedUser(PSID sid, const HANDLE token, const WCHAR *ovpn_admin_group);
 
-BOOL
-CheckOption(const WCHAR *workdir, int narg, WCHAR *argv[], const settings_t *s);
+BOOL CheckOption(const WCHAR *workdir, int narg, WCHAR *argv[], const settings_t *s);
 
 static inline BOOL
 IsOption(const WCHAR *o)

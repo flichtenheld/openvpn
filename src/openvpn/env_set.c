@@ -418,9 +418,7 @@ env_allowed(const char *str)
 /* Make arrays of strings */
 
 const char **
-make_env_array(const struct env_set *es,
-               const bool check_allowed,
-               struct gc_arena *gc)
+make_env_array(const struct env_set *es, const bool check_allowed, struct gc_arena *gc)
 {
     char **ret = NULL;
     struct env_item *e = NULL;
@@ -436,7 +434,7 @@ make_env_array(const struct env_set *es,
     }
 
     /* alloc return array */
-    ALLOC_ARRAY_CLEAR_GC(ret, char *, n+1, gc);
+    ALLOC_ARRAY_CLEAR_GC(ret, char *, n + 1, gc);
 
     /* fill return array */
     if (es)

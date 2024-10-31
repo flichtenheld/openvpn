@@ -59,27 +59,23 @@
  * This function will free() an existing multi->auth_token and keep the
  * existing initial timestamp and session id contained in that token.
  */
-void
-generate_auth_token(const struct user_pass *up, struct tls_multi *multi);
+void generate_auth_token(const struct user_pass *up, struct tls_multi *multi);
 
 /**
  * Verifies the auth token to be in the format that generate_auth_token
  * create and checks if the token is valid.
  *
  */
-unsigned
-verify_auth_token(struct user_pass *up, struct tls_multi *multi,
-                  struct tls_session *session);
-
+unsigned verify_auth_token(struct user_pass *up,
+                           struct tls_multi *multi,
+                           struct tls_session *session);
 
 
 /**
  * Loads an HMAC secret from a file or if no file is present generates a
  * epheremal secret for the run time of the server and stores it into ctx
  */
-void
-auth_token_init_secret(struct key_ctx *key_ctx, const char *key_file,
-                       bool key_inline);
+void auth_token_init_secret(struct key_ctx *key_ctx, const char *key_file, bool key_inline);
 
 
 /**
@@ -95,7 +91,8 @@ void auth_token_write_server_key_file(const char *filename);
  * if auth-token is enabled
  *
  */
-void add_session_token_env(struct tls_session *session, struct tls_multi *multi,
+void add_session_token_env(struct tls_session *session,
+                           struct tls_multi *multi,
                            const struct user_pass *up);
 
 /**
@@ -126,8 +123,7 @@ void wipe_auth_token(struct tls_multi *multi);
 static inline bool
 is_auth_token(const char *password)
 {
-    return (memcmp_constant_time(SESSION_ID_PREFIX, password,
-                                 strlen(SESSION_ID_PREFIX)) == 0);
+    return (memcmp_constant_time(SESSION_ID_PREFIX, password, strlen(SESSION_ID_PREFIX)) == 0);
 }
 /**
  * Checks if a client should be sent a new auth token to update its
@@ -135,15 +131,13 @@ is_auth_token(const char *password)
  * @param multi     Pointer the multi object of the TLS session
  * @param session   Pointer to the TLS session itself
  */
-void
-resend_auth_token_renegotiation(struct tls_multi *multi, struct tls_session *session);
+void resend_auth_token_renegotiation(struct tls_multi *multi, struct tls_session *session);
 
 
 /**
  * Checks if the timer to resend the auth-token has expired and if a new
  * auth-token should be send to the client and triggers the resending
  */
-void
-check_send_auth_token(struct context *c);
+void check_send_auth_token(struct context *c);
 
 #endif /* AUTH_TOKEN_H */

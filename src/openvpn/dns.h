@@ -27,28 +27,32 @@
 #include "buffer.h"
 #include "env_set.h"
 
-enum dns_security {
+enum dns_security
+{
     DNS_SECURITY_UNSET,
     DNS_SECURITY_NO,
     DNS_SECURITY_YES,
     DNS_SECURITY_OPTIONAL
 };
 
-enum dns_server_transport {
+enum dns_server_transport
+{
     DNS_TRANSPORT_UNSET,
     DNS_TRANSPORT_PLAIN,
     DNS_TRANSPORT_HTTPS,
     DNS_TRANSPORT_TLS
 };
 
-struct dns_domain {
+struct dns_domain
+{
     struct dns_domain *next;
     const char *name;
 };
 
 struct dns_server_addr
 {
-    union {
+    union
+    {
         struct in_addr a4;
         struct in6_addr a6;
     } in;
@@ -56,7 +60,8 @@ struct dns_server_addr
     in_port_t port;
 };
 
-struct dns_server {
+struct dns_server
+{
     struct dns_server *next;
     long priority;
     size_t addr_count;
@@ -67,7 +72,8 @@ struct dns_server {
     const char *sni;
 };
 
-struct dns_options {
+struct dns_options
+{
     struct dns_domain *search_domains;
     struct dns_server *servers_prepull;
     struct dns_server *servers;
@@ -129,8 +135,7 @@ bool dns_options_verify(int msglevel, const struct dns_options *o);
  * @param   gc          Pointer to the gc_arena to use for the clone
  * @return              The dns_options clone
  */
-struct dns_options clone_dns_options(const struct dns_options *o,
-                                     struct gc_arena *gc);
+struct dns_options clone_dns_options(const struct dns_options *o, struct gc_arena *gc);
 
 /**
  * Saves and resets the server options, so that pulled ones don't mix in.

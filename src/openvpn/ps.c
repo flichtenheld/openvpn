@@ -47,24 +47,25 @@ struct port_share *port_share = NULL; /* GLOBAL */
 #define COMMAND_EXIT     11
 
 /* Response codes for background -> foreground communication */
-#define RESPONSE_INIT_SUCCEEDED   20
-#define RESPONSE_INIT_FAILED      21
+#define RESPONSE_INIT_SUCCEEDED 20
+#define RESPONSE_INIT_FAILED    21
 
 /*
  * Return values for proxy_connection_io functions
  */
 
-#define IOSTAT_EAGAIN_ON_READ   0 /* recv returned EAGAIN */
-#define IOSTAT_EAGAIN_ON_WRITE  1 /* send returned EAGAIN */
-#define IOSTAT_READ_ERROR       2 /* the other end of our read socket (pc) was closed */
-#define IOSTAT_WRITE_ERROR      3 /* the other end of our write socket (pc->counterpart) was closed */
-#define IOSTAT_GOOD             4 /* nothing to report */
+#define IOSTAT_EAGAIN_ON_READ  0 /* recv returned EAGAIN */
+#define IOSTAT_EAGAIN_ON_WRITE 1 /* send returned EAGAIN */
+#define IOSTAT_READ_ERROR      2 /* the other end of our read socket (pc) was closed */
+#define IOSTAT_WRITE_ERROR     3 /* the other end of our write socket (pc->counterpart) was closed */
+#define IOSTAT_GOOD            4 /* nothing to report */
 
 /*
  * A foreign (non-OpenVPN) connection we are proxying,
  * usually HTTPS
  */
-struct proxy_connection {
+struct proxy_connection
+{
     bool defined;
     struct proxy_connection *next;
     struct proxy_connection *counterpart;
@@ -157,11 +158,11 @@ recv_control(const socket_descriptor_t fd)
 static int
 send_control(const socket_descriptor_t fd, int code)
 {
-    unsigned char c = (unsigned char) code;
+    unsigned char c = (unsigned char)code;
     const ssize_t size = write(fd, &c, sizeof(c));
     if (size == sizeof(c))
     {
-        return (int) size;
+        return (int)size;
     }
     else
     {
@@ -197,7 +198,8 @@ port_share_sendmsg(const socket_descriptor_t sd,
         char cmd;
         ssize_t status;
 
-        dmsg(D_PS_PROXY_DEBUG, "PORT SHARE: sendmsg sd=%d len=%d",
+        dmsg(D_PS_PROXY_DEBUG,
+             "PORT SHARE: sendmsg sd=%d len=%d",
              (int)sd_send,
              head ? BLEN(head) : -1);
 
@@ -219,7 +221,7 @@ port_share_sendmsg(const socket_descriptor_t sd,
         mesg.msg_iov = iov;
 
         mesg.msg_controllen = cmsg_size();
-        mesg.msg_control = (char *) malloc(mesg.msg_controllen);
+        mesg.msg_control = (char *)malloc(mesg.msg_controllen);
         check_malloc_return(mesg.msg_control);
         mesg.msg_flags = 0;
 
@@ -241,9 +243,12 @@ port_share_sendmsg(const socket_descriptor_t sd,
         status = sendmsg(sd, &mesg, MSG_NOSIGNAL);
         if (status == -1)
         {
-            msg(M_WARN|M_ERRNO, "PORT SHARE: sendmsg failed -- unable to communicate with background process (%d,%d,%d,%d)",
-                sd, sd_send, sd_null[0], sd_null[1]
-                );
+            msg(M_WARN | M_ERRNO,
+                "PORT SHARE: sendmsg failed -- unable to communicate with background process (%d,%d,%d,%d)",
+                sd,
+                sd_send,
+                sd_null[0],
+                sd_null[1]);
         }
 
         close_socket_if_defined(sd_null[0]);
@@ -346,13 +351,13 @@ journal_add(const char *journal_dir, struct proxy_connection *pc, struct proxy_c
 
     slen = sizeof(from.addr);
     dlen = sizeof(to.addr);
-    if (!getpeername(pc->sd, (struct sockaddr *) &from.addr.sa, &slen)
-        && !getsockname(cp->sd, (struct sockaddr *) &to.addr.sa, &dlen))
+    if (!getpeername(pc->sd, (struct sockaddr *)&from.addr.sa, &slen)
+        && !getsockname(cp->sd, (struct sockaddr *)&to.addr.sa, &dlen))
     {
         const char *f = print_openvpn_sockaddr(&from, &gc);
         const char *t = print_openvpn_sockaddr(&to, &gc);
-        fnlen =  strlen(journal_dir) + strlen(t) + 2;
-        jfn = (char *) malloc(fnlen);
+        fnlen = strlen(journal_dir) + strlen(t) + 2;
+        jfn = (char *)malloc(fnlen);
         check_malloc_return(jfn);
         snprintf(jfn, fnlen, "%s/%s", journal_dir, t);
         dmsg(D_PS_PROXY_DEBUG, "PORT SHARE PROXY: client origin %s -> %s", jfn, f);
@@ -368,7 +373,7 @@ journal_add(const char *journal_dir, struct proxy_connection *pc, struct proxy_c
         }
         else
         {
-            msg(M_WARN|M_ERRNO, "PORT SHARE: unable to write journal file in %s", jfn);
+            msg(M_WARN | M_ERRNO, "PORT SHARE: unable to write journal file in %s", jfn);
             free(jfn);
         }
     }
@@ -394,11 +399,14 @@ proxy_list_close(struct proxy_connection **list)
 }
 
 static inline void
-proxy_connection_io_requeue(struct proxy_connection *pc, const int rwflags_new, struct event_set *es)
+proxy_connection_io_requeue(struct proxy_connection *pc,
+                            const int rwflags_new,
+                            struct event_set *es)
 {
     if (socket_defined(pc->sd) && pc->rwflags != rwflags_new)
     {
-        /*dmsg (D_PS_PROXY_DEBUG, "PORT SHARE PROXY: requeue[%d] rwflags=%d", (int)pc->sd, rwflags_new);*/
+        /*dmsg (D_PS_PROXY_DEBUG, "PORT SHARE PROXY: requeue[%d] rwflags=%d", (int)pc->sd,
+         * rwflags_new);*/
         event_ctl(es, pc->sd, rwflags_new, (void *)pc);
         pc->rwflags = rwflags_new;
     }
@@ -427,7 +435,7 @@ proxy_entry_new(struct proxy_connection **list,
     /* connect to port share server */
     if ((sd_server = socket(server_addr.addr.sa.sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
-        msg(M_WARN|M_ERRNO, "PORT SHARE PROXY: cannot create socket");
+        msg(M_WARN | M_ERRNO, "PORT SHARE PROXY: cannot create socket");
         return false;
     }
     status = openvpn_connect(sd_server, &server_addr.addr.sa, 5, NULL);
@@ -473,11 +481,14 @@ proxy_entry_new(struct proxy_connection **list,
         journal_add(journal_dir, pc, cp);
     }
 
-    dmsg(D_PS_PROXY_DEBUG, "PORT SHARE PROXY: NEW CONNECTION [c=%d s=%d]", (int)sd_client, (int)sd_server);
+    dmsg(D_PS_PROXY_DEBUG,
+         "PORT SHARE PROXY: NEW CONNECTION [c=%d s=%d]",
+         (int)sd_client,
+         (int)sd_server);
 
     /* set initial i/o states */
     proxy_connection_io_requeue(pc, EVENT_READ, es);
-    proxy_connection_io_requeue(cp, EVENT_READ|EVENT_WRITE, es);
+    proxy_connection_io_requeue(cp, EVENT_READ | EVENT_WRITE, es);
 
     return true;
 }
@@ -517,7 +528,7 @@ control_message_from_parent(const socket_descriptor_t sd_control,
     mesg.msg_iovlen = 2;
 
     mesg.msg_controllen = cmsg_size();
-    mesg.msg_control = (char *) malloc(mesg.msg_controllen);
+    mesg.msg_control = (char *)malloc(mesg.msg_controllen);
     check_malloc_return(mesg.msg_control);
     mesg.msg_flags = 0;
 
@@ -531,10 +542,8 @@ control_message_from_parent(const socket_descriptor_t sd_control,
     status = recvmsg(sd_control, &mesg, MSG_NOSIGNAL);
     if (status != -1)
     {
-        if (h == NULL
-            || h->cmsg_len    != CMSG_LEN(sizeof(socket_descriptor_t))
-            || h->cmsg_level  != SOL_SOCKET
-            || h->cmsg_type   != SCM_RIGHTS)
+        if (h == NULL || h->cmsg_len != CMSG_LEN(sizeof(socket_descriptor_t))
+            || h->cmsg_level != SOL_SOCKET || h->cmsg_type != SCM_RIGHTS)
         {
             msg(M_WARN, "PORT SHARE PROXY: received unknown message");
         }
@@ -547,12 +556,7 @@ control_message_from_parent(const socket_descriptor_t sd_control,
             if (status >= 2 && command == COMMAND_REDIRECT)
             {
                 buf.len = status - 1;
-                if (proxy_entry_new(list,
-                                    es,
-                                    server_addr,
-                                    received_fd,
-                                    &buf,
-                                    journal_dir))
+                if (proxy_entry_new(list, es, server_addr, received_fd, &buf, journal_dir))
                 {
                     CLEAR(buf); /* we gave the buffer to proxy_entry_new */
                 }
@@ -611,7 +615,11 @@ proxy_connection_io_send(struct proxy_connection *pc, int *bytes_sent)
         *bytes_sent += status;
         if (status != pc->buf.len)
         {
-            dmsg(D_PS_PROXY_DEBUG, "PORT SHARE PROXY: partial write[%d], tried=%d got=%d", (int)sd, pc->buf.len, status);
+            dmsg(D_PS_PROXY_DEBUG,
+                 "PORT SHARE PROXY: partial write[%d], tried=%d got=%d",
+                 (int)sd,
+                 pc->buf.len,
+                 status);
             buf_advance(&pc->buf, status);
             return IOSTAT_EAGAIN_ON_WRITE;
         }
@@ -699,9 +707,7 @@ proxy_connection_io_status(const int status, int *rwflags_pc, int *rwflags_cp)
  * in the proxied connection.
  */
 static int
-proxy_connection_io_dispatch(struct proxy_connection *pc,
-                             const int rwflags,
-                             struct event_set *es)
+proxy_connection_io_dispatch(struct proxy_connection *pc, const int rwflags, struct event_set *es)
 {
     const int max_transfer_per_iteration = 10000;
     struct proxy_connection *cp = pc->counterpart;
@@ -777,7 +783,8 @@ port_share_proxy(const struct openvpn_sockaddr hostaddr,
                     const struct event_set_return *e = &esr[i];
                     if (e->arg == sd_control_marker)
                     {
-                        if (!control_message_from_parent(sd_control, &list, es, hostaddr, max_initial_buf, journal_dir))
+                        if (!control_message_from_parent(
+                                sd_control, &list, es, hostaddr, max_initial_buf, journal_dir))
                         {
                             goto done;
                         }
@@ -835,9 +842,9 @@ port_share_open(const char *host,
      * Get host's IP address
      */
 
-    status = openvpn_getaddrinfo(GETADDR_RESOLVE|GETADDR_FATAL,
-                                 host, port,  0, NULL, AF_UNSPEC, &ai);
-    ASSERT(status==0);
+    status =
+        openvpn_getaddrinfo(GETADDR_RESOLVE | GETADDR_FATAL, host, port, 0, NULL, AF_UNSPEC, &ai);
+    ASSERT(status == 0);
     ASSERT(sizeof(hostaddr.addr) >= ai->ai_addrlen);
     memcpy(&hostaddr.addr.sa, ai->ai_addr, ai->ai_addrlen);
     freeaddrinfo(ai);
@@ -845,7 +852,8 @@ port_share_open(const char *host,
     if (msg_test(D_PS_PROXY_DEBUG))
     {
         struct gc_arena gc = gc_new();
-        dmsg(D_PS_PROXY_DEBUG, "PORT SHARE PROXY: receiver will be %s",
+        dmsg(D_PS_PROXY_DEBUG,
+             "PORT SHARE PROXY: receiver will be %s",
              print_openvpn_sockaddr(&hostaddr, &gc));
         gc_free(&gc);
     }
@@ -983,7 +991,7 @@ port_share_abort(struct port_share *ps)
 bool
 is_openvpn_protocol(const struct buffer *buf)
 {
-    const unsigned char *p = (const unsigned char *) BSTR(buf);
+    const unsigned char *p = (const unsigned char *)BSTR(buf);
     const int len = BLEN(buf);
     if (len >= 3)
     {
@@ -1005,7 +1013,7 @@ is_openvpn_protocol(const struct buffer *buf)
              * We don't do the 2 byte check for tls-crypt-v2 because it is very
              * unrealistic to have only 2 bytes available.
              */
-            return  (plen >= 336 && plen < (1024 + 255));
+            return (plen >= 336 && plen < (1024 + 255));
         }
         else
         {

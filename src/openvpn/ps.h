@@ -30,7 +30,8 @@
 #include "buffer.h"
 #include "ssl.h"
 
-struct port_share {
+struct port_share
+{
     /* Foreground's socket to background process */
     socket_descriptor_t foreground_fd;
 

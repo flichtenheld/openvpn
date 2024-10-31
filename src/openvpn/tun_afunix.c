@@ -48,7 +48,6 @@
 #include <stdlib.h>
 
 
-
 static void
 tun_afunix_exec_child(const char *dev_node, struct tuntap *tt, struct env_set *env)
 {
@@ -61,8 +60,7 @@ tun_afunix_exec_child(const char *dev_node, struct tuntap *tt, struct env_set *e
 
     argv_printf(&argv, "%s", program);
 
-    tt->afunix.childprocess = openvpn_execve_check(&argv, env, S_NOWAITPID,
-                                                   msgprefix);
+    tt->afunix.childprocess = openvpn_execve_check(&argv, env, S_NOWAITPID, msgprefix);
     if (!openvpn_waitpid_check(tt->afunix.childprocess, msgprefix, M_WARN))
     {
         tt->afunix.childprocess = 0;
@@ -71,17 +69,15 @@ tun_afunix_exec_child(const char *dev_node, struct tuntap *tt, struct env_set *e
 }
 
 void
-open_tun_afunix(struct options *o,
-                int mtu,
-                struct tuntap *tt,
-                struct env_set *orig_env)
+open_tun_afunix(struct options *o, int mtu, struct tuntap *tt, struct env_set *orig_env)
 {
     struct gc_arena gc = gc_new();
 
     int fds[2];
     if (!(socketpair(AF_UNIX, SOCK_DGRAM, 0, fds) == 0))
     {
-        msg(M_ERR, "Cannot create socket pair for AF_UNIX socket to external "
+        msg(M_ERR,
+            "Cannot create socket pair for AF_UNIX socket to external "
             "program");
         return;
     }
@@ -89,7 +85,7 @@ open_tun_afunix(struct options *o,
 
     /* Ensure that the buffer sizes are decently sized. Otherwise macOS will
      * just have 2048 */
-    struct socket_buffer_size newsizes = {65536, 65536 };
+    struct socket_buffer_size newsizes = { 65536, 65536 };
     socket_set_buffers(fds[0], &newsizes, false);
     socket_set_buffers(fds[1], &newsizes, false);
 
@@ -168,8 +164,8 @@ read_tun_afunix(struct tuntap *tt, uint8_t *buf, int len)
 }
 #else  /* ifndef WIN32 */
 void
-open_tun_afunix(const char *dev, const char *dev_type, int mtu,
-                struct tuntap *tt, struct env_set env)
+open_tun_afunix(
+    const char *dev, const char *dev_type, int mtu, struct tuntap *tt, struct env_set env)
 {
     msg(M_ERR, "AF_UNIX socket support not available on this platform");
 }

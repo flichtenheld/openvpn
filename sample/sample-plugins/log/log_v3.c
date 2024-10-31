@@ -40,7 +40,8 @@
 /*
  * Our context, where we keep our state.
  */
-struct plugin_context {
+struct plugin_context
+{
     const char *username;
     const char *password;
 };
@@ -82,7 +83,8 @@ openvpn_plugin_open_v3(const int v3structver,
     /* Check that we are API compatible */
     if (v3structver != OPENVPN_PLUGINv3_STRUCTVER)
     {
-        printf("log_v3: ** ERROR ** Incompatible plug-in interface between this plug-in and OpenVPN\n");
+        printf(
+            "log_v3: ** ERROR ** Incompatible plug-in interface between this plug-in and OpenVPN\n");
         return OPENVPN_PLUGIN_FUNC_ERROR;
     }
 
@@ -94,25 +96,26 @@ openvpn_plugin_open_v3(const int v3structver,
 
     /* Print some version information about the OpenVPN process using this plug-in */
     printf("log_v3: OpenVPN %s  (Major: %i, Minor: %i, Patch: %s)\n",
-           args->ovpn_version, args->ovpn_version_major,
-           args->ovpn_version_minor, args->ovpn_version_patch);
+           args->ovpn_version,
+           args->ovpn_version_major,
+           args->ovpn_version_minor,
+           args->ovpn_version_patch);
 
     /*  Which callbacks to intercept.  */
-    ret->type_mask =
-        OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_UP)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_DOWN)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_ROUTE_UP)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_IPCHANGE)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_VERIFY)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_CONNECT_V2)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_DISCONNECT)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_LEARN_ADDRESS)
-        |OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_FINAL);
+    ret->type_mask = OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_UP)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_DOWN)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_ROUTE_UP)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_IPCHANGE)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_VERIFY)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_CONNECT_V2)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_CLIENT_DISCONNECT)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_LEARN_ADDRESS)
+                     | OPENVPN_PLUGIN_MASK(OPENVPN_PLUGIN_TLS_FINAL);
 
 
     /* Allocate our context */
-    context = (struct plugin_context *) calloc(1, sizeof(struct plugin_context));
+    context = (struct plugin_context *)calloc(1, sizeof(struct plugin_context));
     if (context == NULL)
     {
         printf("PLUGIN: allocating memory for context failed\n");
@@ -124,7 +127,7 @@ openvpn_plugin_open_v3(const int v3structver,
     context->password = "bar";
 
     /* Point the global context handle to our newly created context */
-    ret->handle = (void *) context;
+    ret->handle = (void *)context;
 
     return OPENVPN_PLUGIN_FUNC_SUCCESS;
 }
@@ -245,13 +248,12 @@ x509_print_info(X509 *x509crt)
 }
 
 
-
 OPENVPN_EXPORT int
 openvpn_plugin_func_v3(const int version,
                        struct openvpn_plugin_args_func_in const *args,
                        struct openvpn_plugin_args_func_return *retptr)
 {
-    struct plugin_context *context = (struct plugin_context *) args->handle;
+    struct plugin_context *context = (struct plugin_context *)args->handle;
 
     printf("\nopenvpn_plugin_func_v3() :::::>> ");
     show(args->type, args->argv, args->envp);
@@ -272,8 +274,8 @@ openvpn_plugin_func_v3(const int version,
         const char *username = get_env("username", args->envp);
         const char *password = get_env("password", args->envp);
 
-        if (username && !strcmp(username, context->username)
-            && password && !strcmp(password, context->password))
+        if (username && !strcmp(username, context->username) && password
+            && !strcmp(password, context->password))
         {
             return OPENVPN_PLUGIN_FUNC_SUCCESS;
         }
@@ -291,6 +293,6 @@ openvpn_plugin_func_v3(const int version,
 OPENVPN_EXPORT void
 openvpn_plugin_close_v1(openvpn_plugin_handle_t handle)
 {
-    struct plugin_context *context = (struct plugin_context *) handle;
+    struct plugin_context *context = (struct plugin_context *)handle;
     free(context);
 }

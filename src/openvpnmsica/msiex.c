@@ -35,10 +35,7 @@
 
 
 UINT
-msi_get_string(
-    _In_ MSIHANDLE hInstall,
-    _In_z_ LPCWSTR szName,
-    _Out_ LPWSTR *pszValue)
+msi_get_string(_In_ MSIHANDLE hInstall, _In_z_ LPCWSTR szName, _Out_ LPWSTR *pszValue)
 {
     if (pszValue == NULL)
     {
@@ -85,7 +82,8 @@ msi_get_string(
     }
     else
     {
-        SetLastError(uiResult); /* MSDN does not mention MsiGetProperty() to set GetLastError(). But we do have an error code. Set last error manually. */
+        SetLastError(uiResult); /* MSDN does not mention MsiGetProperty() to set GetLastError(). But
+                                   we do have an error code. Set last error manually. */
         msg(M_NONFATAL | M_ERRNO, "%s: MsiGetProperty failed", __FUNCTION__);
         return uiResult;
     }
@@ -93,10 +91,7 @@ msi_get_string(
 
 
 UINT
-msi_get_record_string(
-    _In_ MSIHANDLE hRecord,
-    _In_ unsigned int iField,
-    _Out_ LPWSTR *pszValue)
+msi_get_record_string(_In_ MSIHANDLE hRecord, _In_ unsigned int iField, _Out_ LPWSTR *pszValue)
 {
     if (pszValue == NULL)
     {
@@ -143,7 +138,8 @@ msi_get_record_string(
     }
     else
     {
-        SetLastError(uiResult); /* MSDN does not mention MsiRecordGetString() to set GetLastError(). But we do have an error code. Set last error manually. */
+        SetLastError(uiResult); /* MSDN does not mention MsiRecordGetString() to set GetLastError().
+                                   But we do have an error code. Set last error manually. */
         msg(M_NONFATAL | M_ERRNO, "%s: MsiRecordGetString failed", __FUNCTION__);
         return uiResult;
     }
@@ -151,10 +147,7 @@ msi_get_record_string(
 
 
 UINT
-msi_format_record(
-    _In_ MSIHANDLE hInstall,
-    _In_ MSIHANDLE hRecord,
-    _Out_ LPWSTR *pszValue)
+msi_format_record(_In_ MSIHANDLE hInstall, _In_ MSIHANDLE hRecord, _Out_ LPWSTR *pszValue)
 {
     if (pszValue == NULL)
     {
@@ -201,7 +194,8 @@ msi_format_record(
     }
     else
     {
-        SetLastError(uiResult); /* MSDN does not mention MsiFormatRecord() to set GetLastError(). But we do have an error code. Set last error manually. */
+        SetLastError(uiResult); /* MSDN does not mention MsiFormatRecord() to set GetLastError().
+                                   But we do have an error code. Set last error manually. */
         msg(M_NONFATAL | M_ERRNO, "%s: MsiFormatRecord failed", __FUNCTION__);
         return uiResult;
     }
@@ -209,11 +203,10 @@ msi_format_record(
 
 
 UINT
-msi_format_field(
-    _In_ MSIHANDLE hInstall,
-    _In_ MSIHANDLE hRecord,
-    _In_ unsigned int iField,
-    _Out_ LPWSTR *pszValue)
+msi_format_field(_In_ MSIHANDLE hInstall,
+                 _In_ MSIHANDLE hRecord,
+                 _In_ unsigned int iField,
+                 _Out_ LPWSTR *pszValue)
 {
     if (pszValue == NULL)
     {
@@ -247,7 +240,8 @@ msi_format_field(
     uiResult = MsiRecordSetString(hRecordEx, 0, szValue);
     if (uiResult != ERROR_SUCCESS)
     {
-        SetLastError(uiResult); /* MSDN does not mention MsiRecordSetString() to set GetLastError(). But we do have an error code. Set last error manually. */
+        SetLastError(uiResult); /* MSDN does not mention MsiRecordSetString() to set GetLastError().
+                                   But we do have an error code. Set last error manually. */
         msg(M_NONFATAL | M_ERRNO, "%s: MsiRecordSetString failed", __FUNCTION__);
         goto cleanup_hRecordEx;
     }

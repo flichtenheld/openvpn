@@ -30,7 +30,7 @@
 /*
  * Initial default --ping-restart before --pull
  */
-#define PRE_PULL_INITIAL_PING_RESTART 120  /* in seconds */
+#define PRE_PULL_INITIAL_PING_RESTART 120 /* in seconds */
 
 extern const uint8_t ping_string[];
 
@@ -64,7 +64,8 @@ check_ping_restart(struct context *c)
                                  &c->c2.timeval,
                                  (!c->options.ping_timer_remote
                                   || link_socket_actual_defined(&c->c1.link_socket_addrs[0].actual))
-                                 ? ETT_DEFAULT : 15))
+                                     ? ETT_DEFAULT
+                                     : 15))
     {
         trigger_ping_timeout_signal(c);
     }
@@ -77,9 +78,8 @@ static inline void
 check_ping_send(struct context *c)
 {
     if (c->options.ping_send_timeout
-        && event_timeout_trigger(&c->c2.ping_send_interval,
-                                 &c->c2.timeval,
-                                 !TO_LINK_DEF(c) ? ETT_DEFAULT : 1))
+        && event_timeout_trigger(
+            &c->c2.ping_send_interval, &c->c2.timeval, !TO_LINK_DEF(c) ? ETT_DEFAULT : 1))
     {
         check_ping_send_dowork(c);
     }

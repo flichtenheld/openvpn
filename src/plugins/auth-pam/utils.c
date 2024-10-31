@@ -56,7 +56,8 @@ searchandreplace(const char *tosearch, const char *searchfor, const char *replac
         return NULL;
     }
 
-    bool is_potential_integer_overflow =  (templen == SIZE_MAX) || (templen / tosearchlen != replacewithlen);
+    bool is_potential_integer_overflow =
+        (templen == SIZE_MAX) || (templen / tosearchlen != replacewithlen);
 
     if (is_potential_integer_overflow)
     {
@@ -68,7 +69,7 @@ searchandreplace(const char *tosearch, const char *searchfor, const char *replac
     const char *searching = tosearch;
     char *scratch;
 
-    char temp[templen+1];
+    char temp[templen + 1];
     temp[0] = 0;
 
     scratch = strstr(searching, searchfor);
@@ -79,10 +80,10 @@ searchandreplace(const char *tosearch, const char *searchfor, const char *replac
 
     while (scratch)
     {
-        strncat(temp, searching, scratch-searching);
+        strncat(temp, searching, scratch - searching);
         strcat(temp, replacewith);
 
-        searching = scratch+strlen(searchfor);
+        searching = scratch + strlen(searchfor);
         scratch = strstr(searching, searchfor);
     }
     return strdup(temp);

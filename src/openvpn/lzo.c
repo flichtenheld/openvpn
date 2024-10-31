@@ -51,9 +51,11 @@ lzo_compress_init(struct compress_context *compctx)
     int lzo_status = lzo_init();
     if (lzo_status != LZO_E_OK)
     {
-        msg(M_FATAL, "Cannot initialize LZO compression library (lzo_init() returns %d)", lzo_status);
+        msg(M_FATAL,
+            "Cannot initialize LZO compression library (lzo_init() returns %d)",
+            lzo_status);
     }
-    compctx->wu.lzo.wmem = (lzo_voidp) malloc(compctx->wu.lzo.wmem_size);
+    compctx->wu.lzo.wmem = (lzo_voidp)malloc(compctx->wu.lzo.wmem_size);
     check_malloc_return(compctx->wu.lzo.wmem);
 }
 
@@ -65,7 +67,8 @@ lzo_compress_uninit(struct compress_context *compctx)
 }
 
 static void
-lzo_compress(struct buffer *buf, struct buffer work,
+lzo_compress(struct buffer *buf,
+             struct buffer work,
              struct compress_context *compctx,
              const struct frame *frame)
 {
@@ -74,13 +77,14 @@ lzo_compress(struct buffer *buf, struct buffer work,
 }
 
 static void
-lzo_decompress(struct buffer *buf, struct buffer work,
+lzo_decompress(struct buffer *buf,
+               struct buffer work,
                struct compress_context *compctx,
                const struct frame *frame)
 {
     lzo_uint zlen = frame->buf.payload_size;
     int err;
-    uint8_t c;          /* flag indicating whether or not our peer compressed */
+    uint8_t c; /* flag indicating whether or not our peer compressed */
 
     if (buf->len <= 0)
     {
@@ -95,8 +99,7 @@ lzo_decompress(struct buffer *buf, struct buffer work,
     if (c == LZO_COMPRESS_BYTE) /* packet was compressed */
     {
         ASSERT(buf_safe(&work, zlen));
-        err = LZO_DECOMPRESS(BPTR(buf), BLEN(buf), BPTR(&work), &zlen,
-                             compctx->wu.lzo.wmem);
+        err = LZO_DECOMPRESS(BPTR(buf), BLEN(buf), BPTR(&work), &zlen, compctx->wu.lzo.wmem);
         if (err != LZO_E_OK)
         {
             dmsg(D_COMP_ERRORS, "LZO decompression error: %d", err);
@@ -113,7 +116,7 @@ lzo_decompress(struct buffer *buf, struct buffer work,
 
         *buf = work;
     }
-    else if (c == NO_COMPRESS_BYTE)     /* packet was not compressed */
+    else if (c == NO_COMPRESS_BYTE) /* packet was not compressed */
     {
         /* nothing to do */
     }
@@ -125,10 +128,6 @@ lzo_decompress(struct buffer *buf, struct buffer work,
 }
 
 const struct compress_alg lzo_alg = {
-    "lzo",
-    lzo_compress_init,
-    lzo_compress_uninit,
-    lzo_compress,
-    lzo_decompress
+    "lzo", lzo_compress_init, lzo_compress_uninit, lzo_compress, lzo_decompress
 };
 #endif /* ENABLE_LZO */

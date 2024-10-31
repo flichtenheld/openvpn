@@ -46,7 +46,8 @@ stub_compress_uninit(struct compress_context *compctx)
 }
 
 static void
-stub_compress(struct buffer *buf, struct buffer work,
+stub_compress(struct buffer *buf,
+              struct buffer work,
               struct compress_context *compctx,
               const struct frame *frame)
 {
@@ -57,7 +58,7 @@ stub_compress(struct buffer *buf, struct buffer work,
     if (compctx->flags & COMP_F_SWAP)
     {
         uint8_t *head = BPTR(buf);
-        uint8_t *tail  = BEND(buf);
+        uint8_t *tail = BEND(buf);
         ASSERT(buf_safe(buf, 1));
         ++buf->len;
 
@@ -73,7 +74,8 @@ stub_compress(struct buffer *buf, struct buffer work,
 }
 
 static void
-stub_decompress(struct buffer *buf, struct buffer work,
+stub_decompress(struct buffer *buf,
+                struct buffer work,
                 struct compress_context *compctx,
                 const struct frame *frame)
 {
@@ -108,7 +110,8 @@ stub_decompress(struct buffer *buf, struct buffer work,
 
 
 static void
-stubv2_compress(struct buffer *buf, struct buffer work,
+stubv2_compress(struct buffer *buf,
+                struct buffer work,
                 struct compress_context *compctx,
                 const struct frame *frame)
 {
@@ -121,7 +124,8 @@ stubv2_compress(struct buffer *buf, struct buffer work,
 }
 
 static void
-stubv2_decompress(struct buffer *buf, struct buffer work,
+stubv2_decompress(struct buffer *buf,
+                  struct buffer work,
                   struct compress_context *compctx,
                   const struct frame *frame)
 {
@@ -159,18 +163,10 @@ stubv2_decompress(struct buffer *buf, struct buffer work,
 }
 
 const struct compress_alg compv2_stub_alg = {
-    "stubv2",
-    stub_compress_init,
-    stub_compress_uninit,
-    stubv2_compress,
-    stubv2_decompress
+    "stubv2", stub_compress_init, stub_compress_uninit, stubv2_compress, stubv2_decompress
 };
 
 const struct compress_alg comp_stub_alg = {
-    "stub",
-    stub_compress_init,
-    stub_compress_uninit,
-    stub_compress,
-    stub_decompress
+    "stub", stub_compress_init, stub_compress_uninit, stub_compress, stub_decompress
 };
 #endif /* USE_STUB */

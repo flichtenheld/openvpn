@@ -32,7 +32,7 @@
 #include "xkey_common.h"
 #include "cert_data.h"
 
-#if defined(HAVE_XKEY_PROVIDER) && defined (ENABLE_CRYPTOAPI)
+#if defined(HAVE_XKEY_PROVIDER) && defined(ENABLE_CRYPTOAPI)
 #include <setjmp.h>
 #include <cmocka.h>
 #include <openssl/bio.h>
@@ -43,19 +43,18 @@
 #include "test_common.h"
 
 #include <cryptoapi.h>
-#include <cryptoapi.c> /* pull-in the whole file to test static functions */
+#include <cryptoapi.c>         /* pull-in the whole file to test static functions */
 
 struct management *management; /* global */
 static OSSL_PROVIDER *prov[2];
 
 /* mock a management function that xkey_provider needs */
 char *
-management_query_pk_sig(struct management *man, const char *b64_data,
-                        const char *algorithm)
+management_query_pk_sig(struct management *man, const char *b64_data, const char *algorithm)
 {
-    (void) man;
-    (void) b64_data;
-    (void) algorithm;
+    (void)man;
+    (void)b64_data;
+    (void)algorithm;
     return NULL;
 }
 
@@ -74,14 +73,12 @@ crypto_print_openssl_errors(const unsigned int flags)
 OSSL_LIB_CTX *tls_libctx;
 
 #ifndef _countof
-#define _countof(x) sizeof((x))/sizeof(*(x))
+#define _countof(x) sizeof((x)) / sizeof(*(x))
 #endif
 
 /* test data */
-static const uint8_t test_hash[] = {
-    0x77, 0x38, 0x65, 0x00, 0x1e, 0x96, 0x48, 0xc6, 0x57, 0x0b, 0xae,
-    0xc0, 0xb7, 0x96, 0xf9, 0x66, 0x4d, 0x5f, 0xd0, 0xb7
-};
+static const uint8_t test_hash[] = { 0x77, 0x38, 0x65, 0x00, 0x1e, 0x96, 0x48, 0xc6, 0x57, 0x0b,
+                                     0xae, 0xc0, 0xb7, 0x96, 0xf9, 0x66, 0x4d, 0x5f, 0xd0, 0xb7 };
 
 /* valid test strings to test with and without embedded and trailing spaces */
 static const char *valid_str[] = {
@@ -102,13 +99,13 @@ static const char *invalid_str[] = {
  */
 static struct test_cert
 {
-    const char *const cert;             /* certificate as PEM */
-    const char *const key;              /* key as unencrypted PEM */
-    const char *const cname;            /* common-name */
-    const char *const issuer;           /* issuer common-name */
-    const char *const friendly_name;    /* identifies certs loaded to the store -- keep unique */
-    const char *hash;                   /* SHA1 fingerprint */
-    int valid;                          /* nonzero if certificate has not expired */
+    const char *const cert;          /* certificate as PEM */
+    const char *const key;           /* key as unencrypted PEM */
+    const char *const cname;         /* common-name */
+    const char *const issuer;        /* issuer common-name */
+    const char *const friendly_name; /* identifies certs loaded to the store -- keep unique */
+    const char *hash;                /* SHA1 fingerprint */
+    int valid;                       /* nonzero if certificate has not expired */
 } certs[5];
 
 static bool certs_loaded;
@@ -119,11 +116,11 @@ void
 init_cert_data()
 {
     struct test_cert certs_local[] = {
-        {cert1,  key1,  cname1,  "OVPN TEST CA1",  "OVPN Test Cert 1",  hash1,  1},
-        {cert2,  key2,  cname2,  "OVPN TEST CA2",  "OVPN Test Cert 2",  hash2,  1},
-        {cert3,  key3,  cname3,  "OVPN TEST CA1",  "OVPN Test Cert 3",  hash3,  1},
-        {cert4,  key4,  cname4,  "OVPN TEST CA2",  "OVPN Test Cert 4",  hash4,  0},
-        {0}
+        { cert1, key1, cname1, "OVPN TEST CA1", "OVPN Test Cert 1", hash1, 1 },
+        { cert2, key2, cname2, "OVPN TEST CA2", "OVPN Test Cert 2", hash2, 1 },
+        { cert3, key3, cname3, "OVPN TEST CA1", "OVPN Test Cert 3", hash3, 1 },
+        { cert4, key4, cname4, "OVPN TEST CA2", "OVPN Test Cert 4", hash4, 0 },
+        { 0 }
     };
     assert(sizeof(certs_local) == sizeof(certs));
     memcpy(certs, certs_local, sizeof(certs_local));
@@ -145,20 +142,23 @@ lookup_cert(const char *friendly_name)
 static void
 import_certs(void **state)
 {
-    (void) state;
+    (void)state;
     if (certs_loaded)
     {
         return;
     }
     init_cert_data();
-    user_store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER
-                               |CERT_STORE_OPEN_EXISTING_FLAG, L"MY");
+    user_store = CertOpenStore(CERT_STORE_PROV_SYSTEM,
+                               0,
+                               0,
+                               CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG,
+                               L"MY");
     assert_non_null(user_store);
     for (struct test_cert *c = certs; c->cert; c++)
     {
         /* Convert PEM cert & key to pkcs12 and import */
-        const char *pass = "opensesame";        /* some password */
-        const wchar_t *wpass = L"opensesame";   /* same as a wide string */
+        const char *pass = "opensesame";      /* some password */
+        const wchar_t *wpass = L"opensesame"; /* same as a wide string */
 
         X509 *x509 = NULL;
         EVP_PKEY *pkey = NULL;
@@ -192,7 +192,7 @@ import_certs(void **state)
             return;
         }
 
-        CRYPT_DATA_BLOB blob = {.cbData = 0, .pbData = NULL};
+        CRYPT_DATA_BLOB blob = { .cbData = 0, .pbData = NULL };
         int len = i2d_PKCS12(p12, &blob.pbData); /* pbData will be allocated by OpenSSL */
         if (len <= 0)
         {
@@ -201,7 +201,7 @@ import_certs(void **state)
         }
         blob.cbData = len;
 
-        DWORD flags = PKCS12_ALLOW_OVERWRITE_KEY|PKCS12_ALWAYS_CNG_KSP;
+        DWORD flags = PKCS12_ALLOW_OVERWRITE_KEY | PKCS12_ALWAYS_CNG_KSP;
         HCERTSTORE tmp_store = PFXImportCertStore(&blob, wpass, flags);
         PKCS12_free(p12);
         OPENSSL_free(blob.pbData);
@@ -216,8 +216,8 @@ import_certs(void **state)
 
         const CERT_CONTEXT *ctx = CertEnumCertificatesInStore(tmp_store, NULL);
         assert_non_null(ctx);
-        bool added = CertAddCertificateContextToStore(user_store, ctx,
-                                                      CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+        bool added = CertAddCertificateContextToStore(
+            user_store, ctx, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
         assert_true(added);
 
         CertFreeCertificateContext(ctx);
@@ -229,7 +229,7 @@ import_certs(void **state)
 static int
 cleanup(void **state)
 {
-    (void) state;
+    (void)state;
     struct gc_arena gc = gc_new();
     if (user_store) /* delete all certs we imported */
     {
@@ -261,7 +261,7 @@ cleanup(void **state)
 static void
 test_find_cert_bythumb(void **state)
 {
-    (void) state;
+    (void)state;
     char select_string[64];
     struct gc_arena gc = gc_new();
     const CERT_CONTEXT *ctx;
@@ -294,7 +294,7 @@ test_find_cert_bythumb(void **state)
 static void
 test_find_cert_byname(void **state)
 {
-    (void) state;
+    (void)state;
     char select_string[64];
     struct gc_arena gc = gc_new();
     const CERT_CONTEXT *ctx;
@@ -327,7 +327,7 @@ test_find_cert_byname(void **state)
 static void
 test_find_cert_byissuer(void **state)
 {
-    (void) state;
+    (void)state;
     char select_string[64];
     struct gc_arena gc = gc_new();
     const CERT_CONTEXT *ctx;
@@ -360,7 +360,7 @@ test_find_cert_byissuer(void **state)
 static int
 setup_xkey_provider(void **state)
 {
-    (void) state;
+    (void)state;
     /* Initialize providers in a way matching what OpenVPN core does */
     tls_libctx = OSSL_LIB_CTX_new();
     prov[0] = OSSL_PROVIDER_load(tls_libctx, "default");
@@ -375,7 +375,7 @@ setup_xkey_provider(void **state)
 static int
 teardown_xkey_provider(void **state)
 {
-    (void) state;
+    (void)state;
     for (size_t i = 0; i < _countof(prov); i++)
     {
         if (prov[i])
@@ -397,7 +397,7 @@ int digest_sign_verify(EVP_PKEY *privkey, EVP_PKEY *pubkey);
 void
 test_cryptoapi_sign(void **state)
 {
-    (void) state;
+    (void)state;
     char select_string[64];
     X509 *x509 = NULL;
     EVP_PKEY *privkey = NULL;
@@ -431,7 +431,7 @@ test_cryptoapi_sign(void **state)
 void
 test_ssl_ctx_use_cryptoapicert(void **state)
 {
-    (void) state;
+    (void)state;
     char select_string[64];
 
     import_certs(state); /* a no-op if already imported */
@@ -455,7 +455,8 @@ test_ssl_ctx_use_cryptoapicert(void **state)
         /* Use OpenSSL to check that the cert and private key in ssl_ctx "match" */
         if (!SSL_CTX_check_private_key(ssl_ctx))
         {
-            fail_msg("Certificate and private key in ssl_ctx do not match for <%s>", c->friendly_name);
+            fail_msg("Certificate and private key in ssl_ctx do not match for <%s>",
+                     c->friendly_name);
             return;
         }
 
@@ -467,7 +468,7 @@ static void
 test_parse_hexstring(void **state)
 {
     unsigned char hash[255];
-    (void) state;
+    (void)state;
 
     for (int i = 0; i < _countof(valid_str); i++)
     {
@@ -494,10 +495,10 @@ main(void)
         cmocka_unit_test(test_find_cert_bythumb),
         cmocka_unit_test(test_find_cert_byname),
         cmocka_unit_test(test_find_cert_byissuer),
-        cmocka_unit_test_setup_teardown(test_cryptoapi_sign, setup_xkey_provider,
-                                        teardown_xkey_provider),
-        cmocka_unit_test_setup_teardown(test_ssl_ctx_use_cryptoapicert, setup_xkey_provider,
-                                        teardown_xkey_provider),
+        cmocka_unit_test_setup_teardown(
+            test_cryptoapi_sign, setup_xkey_provider, teardown_xkey_provider),
+        cmocka_unit_test_setup_teardown(
+            test_ssl_ctx_use_cryptoapicert, setup_xkey_provider, teardown_xkey_provider),
     };
 
     int ret = cmocka_run_group_tests_name("cryptoapi tests", tests, NULL, cleanup);
@@ -513,4 +514,4 @@ main(void)
     return 0;
 }
 
-#endif  /* ifdef HAVE_XKEY_PROVIDER */
+#endif /* ifdef HAVE_XKEY_PROVIDER */

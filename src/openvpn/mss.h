@@ -36,7 +36,8 @@ void mss_fixup_ipv6(struct buffer *buf, uint16_t maxmss);
 void mss_fixup_dowork(struct buffer *buf, uint16_t maxmss);
 
 /** Set the --mssfix option. */
-void frame_calculate_dynamic(struct frame *frame, struct key_type *kt,
+void frame_calculate_dynamic(struct frame *frame,
+                             struct key_type *kt,
                              const struct options *options,
                              struct link_socket_info *lsi);
 

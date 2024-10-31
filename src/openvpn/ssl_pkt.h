@@ -36,40 +36,40 @@
 #include "ssl_common.h"
 
 /* packet opcode (high 5 bits) and key-id (low 3 bits) are combined in one byte */
-#define P_KEY_ID_MASK                  0x07
-#define P_OPCODE_SHIFT                 3
+#define P_KEY_ID_MASK  0x07
+#define P_OPCODE_SHIFT 3
 
 /* packet opcodes -- the V1 is intended to allow protocol changes in the future */
-#define P_CONTROL_HARD_RESET_CLIENT_V1 1     /* initial key from client, forget previous state */
-#define P_CONTROL_HARD_RESET_SERVER_V1 2     /* initial key from server, forget previous state */
-#define P_CONTROL_SOFT_RESET_V1        3     /* new key, graceful transition from old to new key */
-#define P_CONTROL_V1                   4     /* control channel packet (usually TLS ciphertext) */
-#define P_ACK_V1                       5     /* acknowledgement for packets received */
-#define P_DATA_V1                      6     /* data channel packet */
-#define P_DATA_V2                      9     /* data channel packet with peer-id */
+#define P_CONTROL_HARD_RESET_CLIENT_V1 1 /* initial key from client, forget previous state */
+#define P_CONTROL_HARD_RESET_SERVER_V1 2 /* initial key from server, forget previous state */
+#define P_CONTROL_SOFT_RESET_V1        3 /* new key, graceful transition from old to new key */
+#define P_CONTROL_V1                   4 /* control channel packet (usually TLS ciphertext) */
+#define P_ACK_V1                       5 /* acknowledgement for packets received */
+#define P_DATA_V1                      6 /* data channel packet */
+#define P_DATA_V2                      9 /* data channel packet with peer-id */
 
 /* indicates key_method >= 2 */
-#define P_CONTROL_HARD_RESET_CLIENT_V2 7     /* initial key from client, forget previous state */
-#define P_CONTROL_HARD_RESET_SERVER_V2 8     /* initial key from server, forget previous state */
+#define P_CONTROL_HARD_RESET_CLIENT_V2 7 /* initial key from client, forget previous state */
+#define P_CONTROL_HARD_RESET_SERVER_V2 8 /* initial key from server, forget previous state */
 
 /* indicates key_method >= 2 and client-specific tls-crypt key */
-#define P_CONTROL_HARD_RESET_CLIENT_V3 10    /* initial key from client, forget previous state */
+#define P_CONTROL_HARD_RESET_CLIENT_V3 10 /* initial key from client, forget previous state */
 
 /* Variant of P_CONTROL_V1 but with appended wrapped key
  * like P_CONTROL_HARD_RESET_CLIENT_V3 */
-#define P_CONTROL_WKC_V1               11
+#define P_CONTROL_WKC_V1 11
 
 /* define the range of legal opcodes
  * Since we do no longer support key-method 1 we consider
  * the v1 op codes invalid */
-#define P_FIRST_OPCODE                 3
-#define P_LAST_OPCODE                  11
+#define P_FIRST_OPCODE 3
+#define P_LAST_OPCODE  11
 
 /*
  * Define number of buffers for send and receive in the reliability layer.
  */
-#define TLS_RELIABLE_N_SEND_BUFFERS  6 /* also window size for reliability layer */
-#define TLS_RELIABLE_N_REC_BUFFERS   12
+#define TLS_RELIABLE_N_SEND_BUFFERS 6 /* also window size for reliability layer */
+#define TLS_RELIABLE_N_REC_BUFFERS  12
 
 /*
  * Used in --mode server mode to check tls-auth signature on initial
@@ -82,7 +82,8 @@ struct tls_auth_standalone
     struct frame frame;
 };
 
-enum first_packet_verdict {
+enum first_packet_verdict
+{
     /** This packet is a valid reset packet from the peer (all but tls-crypt-v2) */
     VERDICT_VALID_RESET_V2,
     /** This is a valid v3 reset (tls-crypt-v2) */
@@ -102,7 +103,8 @@ enum first_packet_verdict {
  * struct that stores the temporary data for the tls lite decrypt
  * functions
  */
-struct tls_pre_decrypt_state {
+struct tls_pre_decrypt_state
+{
     struct tls_wrap_ctx tls_wrap_tmp;
     struct buffer newbuf;
     struct session_id peer_session_id;
@@ -148,11 +150,10 @@ void free_tls_pre_decrypt_state(struct tls_pre_decrypt_state *state);
  * @li False if the packet is not valid, did not pass the HMAC firewall
  *     test, or some other error occurred.
  */
-enum first_packet_verdict
-tls_pre_decrypt_lite(const struct tls_auth_standalone *tas,
-                     struct tls_pre_decrypt_state *state,
-                     const struct link_socket_actual *from,
-                     const struct buffer *buf);
+enum first_packet_verdict tls_pre_decrypt_lite(const struct tls_auth_standalone *tas,
+                                               struct tls_pre_decrypt_state *state,
+                                               const struct link_socket_actual *from,
+                                               const struct buffer *buf);
 
 /* Creates an SHA256 HMAC context with a random key that is used for the
  * session id.
@@ -174,11 +175,11 @@ hmac_ctx_t *session_id_hmac_init(void);
  * @param offset        offset to 'now' to use
  * @return              the expected server session id
  */
-struct session_id
-calculate_session_id_hmac(struct session_id client_sid,
-                          const struct openvpn_sockaddr *from,
-                          hmac_ctx_t *hmac,
-                          int handwindow, int offset);
+struct session_id calculate_session_id_hmac(struct session_id client_sid,
+                                            const struct openvpn_sockaddr *from,
+                                            hmac_ctx_t *hmac,
+                                            int handwindow,
+                                            int offset);
 
 /**
  * Checks if a control packet has a correct HMAC server session id
@@ -189,33 +190,30 @@ calculate_session_id_hmac(struct session_id client_sid,
  * @param handwindow    the quantisation of the current time
  * @return              the expected server session id
  */
-bool
-check_session_id_hmac(struct tls_pre_decrypt_state *state,
-                      const struct openvpn_sockaddr *from,
-                      hmac_ctx_t *hmac,
-                      int handwindow);
+bool check_session_id_hmac(struct tls_pre_decrypt_state *state,
+                           const struct openvpn_sockaddr *from,
+                           hmac_ctx_t *hmac,
+                           int handwindow);
 
 /*
  * Write a control channel authentication record.
  */
-void
-write_control_auth(struct tls_session *session,
-                   struct key_state *ks,
-                   struct buffer *buf,
-                   struct link_socket_actual **to_link_addr,
-                   int opcode,
-                   int max_ack,
-                   bool prepend_ack);
+void write_control_auth(struct tls_session *session,
+                        struct key_state *ks,
+                        struct buffer *buf,
+                        struct link_socket_actual **to_link_addr,
+                        int opcode,
+                        int max_ack,
+                        bool prepend_ack);
 
 
 /*
  * Read a control channel authentication record.
  */
-bool
-read_control_auth(struct buffer *buf,
-                  struct tls_wrap_ctx *ctx,
-                  const struct link_socket_actual *from,
-                  const struct tls_options *opt);
+bool read_control_auth(struct buffer *buf,
+                       struct tls_wrap_ctx *ctx,
+                       const struct link_socket_actual *from,
+                       const struct tls_options *opt);
 
 
 /**
@@ -223,13 +221,12 @@ read_control_auth(struct buffer *buf,
  * from the tls pre decrypt state.
  *
  */
-struct buffer
-tls_reset_standalone(struct tls_wrap_ctx *ctx,
-                     struct tls_auth_standalone *tas,
-                     struct session_id *own_sid,
-                     struct session_id *remote_sid,
-                     uint8_t header,
-                     bool request_resend_wkc);
+struct buffer tls_reset_standalone(struct tls_wrap_ctx *ctx,
+                                   struct tls_auth_standalone *tas,
+                                   struct session_id *own_sid,
+                                   struct session_id *remote_sid,
+                                   uint8_t header,
+                                   bool request_resend_wkc);
 
 
 /**
@@ -242,8 +239,7 @@ tls_reset_standalone(struct tls_wrap_ctx *ctx,
  *              with length 0 if there is no message or the message has
  *              invalid characters.
  */
-struct buffer
-extract_command_buffer(struct buffer *buf, struct gc_arena *gc);
+struct buffer extract_command_buffer(struct buffer *buf, struct gc_arena *gc);
 
 static inline const char *
 packet_opcode_name(int op)
@@ -319,14 +315,14 @@ tls_session_get_tls_wrap(struct tls_session *session, int key_id)
  * but the network time part of the packet id takes care of that. And
  * this is also a rather theoretical scenario as it still needs more than
  * 2^31 control channel packets to happen */
-#define EARLY_NEG_MASK          0xff000000
-#define EARLY_NEG_START         0x0f000000
+#define EARLY_NEG_MASK  0xff000000
+#define EARLY_NEG_START 0x0f000000
 
 
 /* Early negotiation that part of the server response in the RESET_V2 packet.
  * Since clients that announce early negotiation support will treat the payload
  * of reset packets special and parse it as TLV messages.
  * as TLV (type, length, value) */
-#define TLV_TYPE_EARLY_NEG_FLAGS        0x0001
-#define EARLY_NEG_FLAG_RESEND_WKC       0x0001
+#define TLV_TYPE_EARLY_NEG_FLAGS  0x0001
+#define EARLY_NEG_FLAG_RESEND_WKC 0x0001
 #endif /* ifndef SSL_PKT_H */

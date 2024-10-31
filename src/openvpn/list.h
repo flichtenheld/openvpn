@@ -37,8 +37,8 @@
 #include "basic.h"
 #include "buffer.h"
 
-#define hashsize(n) ((uint32_t)1<<(n))
-#define hashmask(n) (hashsize(n)-1)
+#define hashsize(n) ((uint32_t)1 << (n))
+#define hashmask(n) (hashsize(n) - 1)
 
 struct hash_element
 {
@@ -78,10 +78,7 @@ struct hash_element *hash_lookup_fast(struct hash *hash,
                                       const void *key,
                                       uint32_t hv);
 
-bool hash_remove_fast(struct hash *hash,
-                      struct hash_bucket *bucket,
-                      const void *key,
-                      uint32_t hv);
+bool hash_remove_fast(struct hash *hash, struct hash_bucket *bucket, const void *key, uint32_t hv);
 
 void hash_remove_by_value(struct hash *hash, void *value);
 
@@ -155,11 +152,8 @@ hash_lookup(struct hash *hash, const void *key)
 
 /* NOTE: assumes that key is not a duplicate */
 static inline void
-hash_add_fast(struct hash *hash,
-              struct hash_bucket *bucket,
-              const void *key,
-              uint32_t hv,
-              void *value)
+hash_add_fast(
+    struct hash *hash, struct hash_bucket *bucket, const void *key, uint32_t hv, void *value)
 {
     struct hash_element *he;
 

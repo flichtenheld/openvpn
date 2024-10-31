@@ -58,7 +58,7 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
     /* get the tls_session pointer */
     ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     ASSERT(ssl);
-    session = (struct tls_session *) SSL_get_ex_data(ssl, mydata_index);
+    session = (struct tls_session *)SSL_get_ex_data(ssl, mydata_index);
     ASSERT(session);
 
     X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
@@ -80,7 +80,8 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         /* Log and ignore missing CRL errors */
         if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_UNABLE_TO_GET_CRL)
         {
-            msg(D_TLS_DEBUG_LOW, "VERIFY WARNING: depth=%d, %s: %s",
+            msg(D_TLS_DEBUG_LOW,
+                "VERIFY WARNING: depth=%d, %s: %s",
                 X509_STORE_CTX_get_error_depth(ctx),
                 X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx)),
                 subject);
@@ -89,10 +90,12 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         }
 
         /* Remote site specified a certificate, but it's not correct */
-        msg(D_TLS_ERRORS, "VERIFY ERROR: depth=%d, error=%s: %s, serial=%s",
+        msg(D_TLS_ERRORS,
+            "VERIFY ERROR: depth=%d, error=%s: %s, serial=%s",
             X509_STORE_CTX_get_error_depth(ctx),
             X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx)),
-            subject, serial ? serial : "<not available>");
+            subject,
+            serial ? serial : "<not available>");
 
         ERR_clear_error();
 
@@ -121,8 +124,7 @@ x509_username_field_ext_supported(const char *fieldname)
     return nid == NID_subject_alt_name || nid == NID_issuer_alt_name;
 }
 
-static
-bool
+static bool
 extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
 {
     bool retval = false;
@@ -130,8 +132,7 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
 
     if (!x509_username_field_ext_supported(fieldname))
     {
-        msg(D_TLS_ERRORS,
-            "ERROR: --x509-username-field 'ext:%s' not supported", fieldname);
+        msg(D_TLS_ERRORS, "ERROR: --x509-username-field 'ext:%s' not supported", fieldname);
         return false;
     }
 
@@ -149,10 +150,10 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
         numalts = sk_GENERAL_NAME_num(extensions);
 
         /* loop through all alternatives */
-        for (i = 0; i<numalts; i++)
+        for (i = 0; i < numalts; i++)
         {
             /* get a handle to alternative name number i */
-            const GENERAL_NAME *name = sk_GENERAL_NAME_value(extensions, i );
+            const GENERAL_NAME *name = sk_GENERAL_NAME_value(extensions, i);
 
             switch (name->type)
             {
@@ -175,8 +176,10 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
                     break;
 
                 default:
-                    msg(D_TLS_DEBUG, "%s: ignoring general name field type %i",
-                        __func__, name->type);
+                    msg(D_TLS_DEBUG,
+                        "%s: ignoring general name field type %i",
+                        __func__,
+                        name->type);
                     break;
             }
         }
@@ -199,8 +202,7 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
  * to contain result is grounds for error).
  */
 static result_t
-extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out,
-                       int size)
+extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out, int size)
 {
     int lastpos = -1;
     int tmp = -1;
@@ -257,13 +259,12 @@ extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out,
 }
 
 result_t
-backend_x509_get_username(char *common_name, int cn_len,
-                          char *x509_username_field, X509 *peer_cert)
+backend_x509_get_username(char *common_name, int cn_len, char *x509_username_field, X509 *peer_cert)
 {
 #ifdef ENABLE_X509ALTUSERNAME
     if (strncmp("ext:", x509_username_field, 4) == 0)
     {
-        if (!extract_x509_extension(peer_cert, x509_username_field+4, common_name, cn_len))
+        if (!extract_x509_extension(peer_cert, x509_username_field + 4, common_name, cn_len))
         {
             return FAILURE;
         }
@@ -272,10 +273,9 @@ backend_x509_get_username(char *common_name, int cn_len,
     {
         ASN1_INTEGER *asn1_i = X509_get_serialNumber(peer_cert);
         struct gc_arena gc = gc_new();
-        char *serial = format_hex_ex(asn1_i->data, asn1_i->length,
-                                     0, 1 | FHE_CAPS, NULL, &gc);
+        char *serial = format_hex_ex(asn1_i->data, asn1_i->length, 0, 1 | FHE_CAPS, NULL, &gc);
 
-        if (!serial || cn_len <= strlen(serial)+2)
+        if (!serial || cn_len <= strlen(serial) + 2)
         {
             gc_free(&gc);
             return FAILURE;
@@ -285,11 +285,12 @@ backend_x509_get_username(char *common_name, int cn_len,
     }
     else
 #endif /* ifdef ENABLE_X509ALTUSERNAME */
-    if (FAILURE == extract_x509_field_ssl(X509_get_subject_name(peer_cert),
-                                          x509_username_field, common_name, cn_len))
-    {
-        return FAILURE;
-    }
+        if (FAILURE
+            == extract_x509_field_ssl(
+                X509_get_subject_name(peer_cert), x509_username_field, common_name, cn_len))
+        {
+            return FAILURE;
+        }
 
     return SUCCESS;
 }
@@ -339,8 +340,7 @@ backend_x509_write_pem(openvpn_x509_cert_t *cert, const char *filename)
     return SUCCESS;
 err:
     BIO_free(out);
-    crypto_msg(D_TLS_DEBUG_LOW, "Error writing X509 certificate to file %s",
-               filename);
+    crypto_msg(D_TLS_DEBUG_LOW, "Error writing X509 certificate to file %s", filename);
     return FAILURE;
 }
 
@@ -377,9 +377,11 @@ x509_get_subject(X509 *cert, struct gc_arena *gc)
         goto err;
     }
 
-    X509_NAME_print_ex(subject_bio, X509_get_subject_name(cert),
-                       0, XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN
-                       |ASN1_STRFLGS_UTF8_CONVERT | ASN1_STRFLGS_ESC_CTRL);
+    X509_NAME_print_ex(subject_bio,
+                       X509_get_subject_name(cert),
+                       0,
+                       XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN | ASN1_STRFLGS_UTF8_CONVERT
+                           | ASN1_STRFLGS_ESC_CTRL);
 
     if (BIO_eof(subject_bio))
     {
@@ -421,7 +423,10 @@ err:
  */
 
 void
-x509_track_add(const struct x509_track **ll_head, const char *name, int msglevel, struct gc_arena *gc)
+x509_track_add(const struct x509_track **ll_head,
+               const char *name,
+               int msglevel,
+               struct gc_arena *gc)
 {
     struct x509_track *xt;
     ALLOC_OBJ_CLEAR_GC(xt, struct x509_track, gc);
@@ -453,7 +458,7 @@ do_setenv_x509(struct env_set *es, const char *name, char *value, int depth)
     string_mod(value, CC_ANY, CC_CRLF, '?');
     msg(D_X509_ATTR, "X509 ATTRIBUTE name='%s' value='%s' depth=%d", name, value, depth);
     name_expand_size = 64 + strlen(name);
-    name_expand = (char *) malloc(name_expand_size);
+    name_expand = (char *)malloc(name_expand_size);
     check_malloc_return(name_expand);
     snprintf(name_expand, name_expand_size, "X509_%d_%s", depth, name);
     setenv_str(es, name_expand, value);
@@ -488,8 +493,7 @@ x509_setenv_track(const struct x509_track *xt, struct env_set *es, const int dep
                         fp_buf = x509_get_sha256_fingerprint(x509, &gc);
                     }
 
-                    fp_str = format_hex_ex(BPTR(&fp_buf), BLEN(&fp_buf), 0,
-                                           1 | FHE_CAPS, ":", &gc);
+                    fp_str = format_hex_ex(BPTR(&fp_buf), BLEN(&fp_buf), 0, 1 | FHE_CAPS, ":", &gc);
                     do_setenv_x509(es, xt->name, fp_str, depth);
                 }
                 break;
@@ -596,10 +600,9 @@ x509_setenv(struct env_set *es, int cert_depth, openvpn_x509_cert_t *peer_cert)
             continue;
         }
         name_expand_size = 64 + strlen(objbuf);
-        name_expand = (char *) malloc(name_expand_size);
+        name_expand = (char *)malloc(name_expand_size);
         check_malloc_return(name_expand);
-        snprintf(name_expand, name_expand_size, "X509_%d_%s", cert_depth,
-                 objbuf);
+        snprintf(name_expand, name_expand_size, "X509_%d_%s", cert_depth, objbuf);
         string_mod(name_expand, CC_PRINT, CC_CRLF, '_');
         string_mod((char *)buf, CC_PRINT, CC_CRLF, '_');
         setenv_str_incr(es, name_expand, (char *)buf);
@@ -621,8 +624,8 @@ x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
          * Unfortunately, X509_check_purpose() does some weird thing that
          * prevent it to take a const argument
          */
-        result_t result = X509_check_purpose(peer_cert, X509_PURPOSE_SSL_CLIENT, 0) ?
-                          SUCCESS : FAILURE;
+        result_t result =
+            X509_check_purpose(peer_cert, X509_PURPOSE_SSL_CLIENT, 0) ? SUCCESS : FAILURE;
 
         /*
          * old versions of OpenSSL allow us to make the less strict check we used to
@@ -636,7 +639,8 @@ x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
             result = (ns && ns->length > 0 && (ns->data[0] & NS_SSL_CLIENT)) ? SUCCESS : FAILURE;
             if (result == SUCCESS)
             {
-                msg(M_WARN, "X509: Certificate is a client certificate yet it's purpose "
+                msg(M_WARN,
+                    "X509: Certificate is a client certificate yet it's purpose "
                     "cannot be verified (check may fail in the future)");
             }
             ASN1_BIT_STRING_free(ns);
@@ -649,8 +653,8 @@ x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
          * Unfortunately, X509_check_purpose() does some weird thing that
          * prevent it to take a const argument
          */
-        result_t result = X509_check_purpose(peer_cert, X509_PURPOSE_SSL_SERVER, 0) ?
-                          SUCCESS : FAILURE;
+        result_t result =
+            X509_check_purpose(peer_cert, X509_PURPOSE_SSL_SERVER, 0) ? SUCCESS : FAILURE;
 
         /*
          * old versions of OpenSSL allow us to make the less strict check we used to
@@ -664,7 +668,8 @@ x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
             result = (ns && ns->length > 0 && (ns->data[0] & NS_SSL_SERVER)) ? SUCCESS : FAILURE;
             if (result == SUCCESS)
             {
-                msg(M_WARN, "X509: Certificate is a server certificate yet it's purpose "
+                msg(M_WARN,
+                    "X509: Certificate is a server certificate yet it's purpose "
                     "cannot be verified (check may fail in the future)");
             }
             ASN1_BIT_STRING_free(ns);
@@ -676,8 +681,7 @@ x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
 }
 
 result_t
-x509_verify_cert_ku(X509 *x509, const unsigned *const expected_ku,
-                    int expected_len)
+x509_verify_cert_ku(X509 *x509, const unsigned *const expected_ku, int expected_len)
 {
     ASN1_BIT_STRING *ku = X509_get_ext_d2i(x509, NID_key_usage, NULL, NULL);
 
@@ -723,8 +727,7 @@ x509_verify_cert_ku(X509 *x509, const unsigned *const expected_ku,
 
     if (fFound != SUCCESS)
     {
-        msg(D_TLS_ERRORS,
-            "ERROR: Certificate has key usage %04x, expected one of:", nku);
+        msg(D_TLS_ERRORS, "ERROR: Certificate has key usage %04x, expected one of:", nku);
         for (size_t i = 0; i < expected_len && expected_ku[i]; i++)
         {
             msg(D_TLS_ERRORS, " * %04x", expected_ku[i]);
@@ -742,8 +745,7 @@ x509_verify_cert_eku(X509 *x509, const char *const expected_oid)
     EXTENDED_KEY_USAGE *eku = NULL;
     result_t fFound = FAILURE;
 
-    if ((eku = (EXTENDED_KEY_USAGE *) X509_get_ext_d2i(x509, NID_ext_key_usage,
-                                                       NULL, NULL)) == NULL)
+    if ((eku = (EXTENDED_KEY_USAGE *)X509_get_ext_d2i(x509, NID_ext_key_usage, NULL, NULL)) == NULL)
     {
         msg(D_HANDSHAKE, "Certificate does not have extended key usage extension");
     }
@@ -759,8 +761,10 @@ x509_verify_cert_eku(X509 *x509, const char *const expected_oid)
 
             if (SUCCESS != fFound && OBJ_obj2txt(szOid, sizeof(szOid), oid, 0) != -1)
             {
-                msg(D_HANDSHAKE, "++ Certificate has EKU (str) %s, expects %s",
-                    szOid, expected_oid);
+                msg(D_HANDSHAKE,
+                    "++ Certificate has EKU (str) %s, expects %s",
+                    szOid,
+                    expected_oid);
                 if (!strcmp(expected_oid, szOid))
                 {
                     fFound = SUCCESS;
@@ -768,8 +772,10 @@ x509_verify_cert_eku(X509 *x509, const char *const expected_oid)
             }
             if (SUCCESS != fFound && OBJ_obj2txt(szOid, sizeof(szOid), oid, 1) != -1)
             {
-                msg(D_HANDSHAKE, "++ Certificate has EKU (oid) %s, expects %s",
-                    szOid, expected_oid);
+                msg(D_HANDSHAKE,
+                    "++ Certificate has EKU (oid) %s, expects %s",
+                    szOid,
+                    expected_oid);
                 if (!strcmp(expected_oid, szOid))
                 {
                     fFound = SUCCESS;

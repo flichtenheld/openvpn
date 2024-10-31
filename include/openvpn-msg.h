@@ -27,7 +27,8 @@
 #include <windef.h>
 #include <ws2tcpip.h>
 
-typedef enum {
+typedef enum
+{
     msg_acknowledgement,
     msg_add_address,
     msg_del_address,
@@ -48,28 +49,33 @@ typedef enum {
     msg_del_wins_cfg
 } message_type_t;
 
-typedef struct {
+typedef struct
+{
     message_type_t type;
     size_t size;
     int message_id;
 } message_header_t;
 
-typedef union {
+typedef union
+{
     struct in_addr ipv4;
     struct in6_addr ipv6;
 } inet_address_t;
 
-typedef struct {
+typedef struct
+{
     int index;
     char name[256];
 } interface_t;
 
-typedef enum {
-    wfp_block_local = 1<<0,
-    wfp_block_dns = 1<<1
+typedef enum
+{
+    wfp_block_local = 1 << 0,
+    wfp_block_dns = 1 << 1
 } wfp_block_flags_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     short family;
     inet_address_t address;
@@ -77,7 +83,8 @@ typedef struct {
     interface_t iface;
 } address_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     short family;
     inet_address_t prefix;
@@ -87,7 +94,8 @@ typedef struct {
     int metric;
 } route_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     interface_t iface;
     char domains[512];
@@ -96,14 +104,16 @@ typedef struct {
     inet_address_t addr[4]; /* support up to 4 dns addresses */
 } dns_cfg_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     interface_t iface;
     int addr_len;
     inet_address_t addr[4]; /* support up to 4 dns addresses */
 } wins_cfg_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     interface_t iface;
     int disable_nbt;
@@ -115,29 +125,34 @@ typedef struct {
 
 /* TODO: NTP */
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     short family;
     interface_t iface;
 } flush_neighbors_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     int error_number;
 } ack_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     wfp_block_flags_t flags;
     interface_t iface;
 } wfp_block_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     interface_t iface;
 } enable_dhcp_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     HANDLE device;
     HANDLE send_ring_handle;
@@ -146,7 +161,8 @@ typedef struct {
     HANDLE receive_tail_moved;
 } register_ring_buffers_message_t;
 
-typedef struct {
+typedef struct
+{
     message_header_t header;
     interface_t iface;
     short family;

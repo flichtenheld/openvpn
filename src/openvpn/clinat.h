@@ -31,7 +31,8 @@
 #define CN_OUTGOING 0
 #define CN_INCOMING 1
 
-struct client_nat_entry {
+struct client_nat_entry
+{
 #define CN_SNAT 0
 #define CN_DNAT 1
     int type;
@@ -40,16 +41,19 @@ struct client_nat_entry {
     in_addr_t foreign_network;
 };
 
-struct client_nat_option_list {
+struct client_nat_option_list
+{
     int n;
     struct client_nat_entry entries[MAX_CLIENT_NAT];
 };
 
 struct client_nat_option_list *new_client_nat_list(struct gc_arena *gc);
 
-struct client_nat_option_list *clone_client_nat_option_list(const struct client_nat_option_list *src, struct gc_arena *gc);
+struct client_nat_option_list *clone_client_nat_option_list(
+    const struct client_nat_option_list *src, struct gc_arena *gc);
 
-void copy_client_nat_option_list(struct client_nat_option_list *dest, const struct client_nat_option_list *src);
+void copy_client_nat_option_list(struct client_nat_option_list *dest,
+                                 const struct client_nat_option_list *src);
 
 void print_client_nat_list(const struct client_nat_option_list *list, int msglevel);
 

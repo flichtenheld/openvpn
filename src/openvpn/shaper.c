@@ -72,8 +72,11 @@ shaper_soonest_event(struct timeval *tv, int delay)
         }
     }
 #ifdef SHAPER_DEBUG
-    dmsg(D_SHAPER_DEBUG, "SHAPER shaper_soonest_event sec=%" PRIi64 " usec=%ld ret=%d",
-         (int64_t)tv->tv_sec, (long)tv->tv_usec, (int)ret);
+    dmsg(D_SHAPER_DEBUG,
+         "SHAPER shaper_soonest_event sec=%" PRIi64 " usec=%ld ret=%d",
+         (int64_t)tv->tv_sec,
+         (long)tv->tv_usec,
+         (int)ret);
 #endif
     return ret;
 }
@@ -87,6 +90,5 @@ shaper_reset_wakeup(struct shaper *s)
 void
 shaper_msg(struct shaper *s)
 {
-    msg(M_INFO, "Output Traffic Shaping initialized at %d bytes per second",
-        s->bytes_per_second);
+    msg(M_INFO, "Output Traffic Shaping initialized at %d bytes per second", s->bytes_per_second);
 }

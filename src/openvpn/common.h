@@ -28,7 +28,7 @@
  * Statistics counters and associated printf format.
  */
 typedef uint64_t counter_type;
-#define counter_format  "%" PRIu64
+#define counter_format "%" PRIu64
 
 /*
  * Time intervals
@@ -38,17 +38,17 @@ typedef int interval_t;
 /*
  * Used as an upper bound for timeouts.
  */
-#define BIG_TIMEOUT  (60*60*24*7)  /* one week (in seconds) */
+#define BIG_TIMEOUT (60 * 60 * 24 * 7) /* one week (in seconds) */
 
 /*
  * Printf formats for special types
  */
 #ifdef _WIN64
-#define ptr_format              "0x%016" PRIx64
+#define ptr_format "0x%016" PRIx64
 #else
-#define ptr_format              "0x%08lx"
+#define ptr_format "0x%08lx"
 #endif
-#define fragment_header_format  "0x%08x"
+#define fragment_header_format "0x%08x"
 
 /* these are used to cast the arguments
  * and MUST match the formats above */
@@ -95,6 +95,7 @@ typedef unsigned long ptr_type;
 /*
  * Script security warning
  */
-#define SCRIPT_SECURITY_WARNING "WARNING: External program may not be called unless '--script-security 2' or higher is enabled. See --help text or man page for detailed info."
+#define SCRIPT_SECURITY_WARNING \
+    "WARNING: External program may not be called unless '--script-security 2' or higher is enabled. See --help text or man page for detailed info."
 
 #endif /* ifndef COMMON_H */

@@ -42,17 +42,20 @@
 
 #define MAX_PLUGINS 16
 
-struct plugin_option {
+struct plugin_option
+{
     const char *so_pathname;
     const char **argv;
 };
 
-struct plugin_option_list {
+struct plugin_option_list
+{
     int n;
     struct plugin_option plugins[MAX_PLUGINS];
 };
 
-struct plugin {
+struct plugin
+{
     bool initialized;
     const char *so_pathname;
     unsigned int plugin_type_mask;
@@ -106,8 +109,7 @@ struct plugin_return
 
 struct plugin_option_list *plugin_option_list_new(struct gc_arena *gc);
 
-bool plugin_option_list_add(struct plugin_option_list *list, char **p,
-                            struct gc_arena *gc);
+bool plugin_option_list_add(struct plugin_option_list *list, char **p, struct gc_arena *gc);
 
 #ifndef ENABLE_SMALL
 void plugin_option_list_print(const struct plugin_option_list *list, int msglevel);
@@ -130,8 +132,7 @@ int plugin_call_ssl(const struct plugin_list *pl,
                     struct plugin_return *pr,
                     struct env_set *es,
                     int current_cert_depth,
-                    openvpn_x509_cert_t *current_cert
-                    );
+                    openvpn_x509_cert_t *current_cert);
 
 void plugin_list_close(struct plugin_list *pl);
 
@@ -174,8 +175,14 @@ plugin_return_init(struct plugin_return *pr)
 }
 
 #else  /* ifdef ENABLE_PLUGIN */
-struct plugin_list { int dummy; };
-struct plugin_return { int dummy; };
+struct plugin_list
+{
+    int dummy;
+};
+struct plugin_return
+{
+    int dummy;
+};
 
 static inline bool
 plugin_defined(const struct plugin_list *pl, const int type)
@@ -190,8 +197,7 @@ plugin_call_ssl(const struct plugin_list *pl,
                 struct plugin_return *pr,
                 struct env_set *es,
                 int current_cert_depth,
-                openvpn_x509_cert_t *current_cert
-                )
+                openvpn_x509_cert_t *current_cert)
 {
     return 0;
 }

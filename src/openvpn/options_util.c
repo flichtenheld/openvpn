@@ -123,12 +123,11 @@ positive_atoi(const char *str, int msglevel)
 
     if (i < 0 || *endptr != '\0' || i > INT_MAX)
     {
-        msg(msglevel, "Cannot parse argument '%s' as non-negative integer",
-            str);
+        msg(msglevel, "Cannot parse argument '%s' as non-negative integer", str);
         i = 0;
     }
 
-    return (int) i;
+    return (int)i;
 }
 
 int
@@ -143,5 +142,5 @@ atoi_warn(const char *str, int msglevel)
         i = 0;
     }
 
-    return (int) i;
+    return (int)i;
 }

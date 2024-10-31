@@ -44,13 +44,13 @@ test_buffer_strprefix(void **state)
     assert_false(strprefix("12", "123"));
 }
 
-#define testsep ","
+#define testsep   ","
 #define testnosep ""
-#define teststr1 "one"
-#define teststr2 "two"
-#define teststr3 "three"
+#define teststr1  "one"
+#define teststr2  "two"
+#define teststr3  "three"
 
-#define assert_buf_equals_str(buf, str) \
+#define assert_buf_equals_str(buf, str)       \
     assert_int_equal(BLEN(buf), strlen(str)); \
     assert_memory_equal(BPTR(buf), str, BLEN(buf));
 
@@ -83,9 +83,7 @@ static void
 test_buffer_format_hex_ex(void **state)
 {
     const int input_size = 10;
-    const uint8_t input[] = {
-        0x01, 0x00, 0xff, 0x10, 0xff, 0x00, 0xf0, 0x0f, 0x09, 0x0a
-    };
+    const uint8_t input[] = { 0x01, 0x00, 0xff, 0x10, 0xff, 0x00, 0xf0, 0x0f, 0x09, 0x0a };
     char *output;
     struct gc_arena gc = gc_new();
 
@@ -114,7 +112,8 @@ test_buffer_format_hex_ex(void **state)
     gc_free(&gc);
 }
 
-struct test_buffer_list_aggregate_ctx {
+struct test_buffer_list_aggregate_ctx
+{
     struct buffer_list *empty;
     struct buffer_list *one_two_three;
     struct buffer_list *zero_length_strings;
@@ -124,7 +123,7 @@ struct test_buffer_list_aggregate_ctx {
 static int
 test_buffer_list_setup(void **state)
 {
-    struct test_buffer_list_aggregate_ctx *ctx  = calloc(1, sizeof(*ctx));
+    struct test_buffer_list_aggregate_ctx *ctx = calloc(1, sizeof(*ctx));
     ctx->empty = buffer_list_new();
 
     ctx->one_two_three = buffer_list_new();
@@ -189,8 +188,7 @@ test_buffer_list_aggregate_separator_two(void **state)
     /* Aggregate the first two elements
      * (add 1 to max_len to test if "three" is not sneaked in too)
      */
-    buffer_list_aggregate_separator(ctx->one_two_three, strlen(expected) + 1,
-                                    testsep);
+    buffer_list_aggregate_separator(ctx->one_two_three, strlen(expected) + 1, testsep);
     assert_int_equal(ctx->one_two_three->size, 2);
     struct buffer *buf = buffer_list_peek(ctx->one_two_three);
     assert_buf_equals_str(buf, expected);
@@ -202,11 +200,10 @@ test_buffer_list_aggregate_separator_all(void **state)
     struct test_buffer_list_aggregate_ctx *ctx = *state;
 
     /* Aggregate all */
-    buffer_list_aggregate_separator(ctx->one_two_three, 1<<16, testsep);
+    buffer_list_aggregate_separator(ctx->one_two_three, 1 << 16, testsep);
     assert_int_equal(ctx->one_two_three->size, 1);
     struct buffer *buf = buffer_list_peek(ctx->one_two_three);
-    assert_buf_equals_str(buf,
-                          teststr1 testsep teststr2 testsep teststr3 testsep);
+    assert_buf_equals_str(buf, teststr1 testsep teststr2 testsep teststr3 testsep);
 }
 
 static void
@@ -215,7 +212,7 @@ test_buffer_list_aggregate_separator_nosep(void **state)
     struct test_buffer_list_aggregate_ctx *ctx = *state;
 
     /* Aggregate all */
-    buffer_list_aggregate_separator(ctx->one_two_three, 1<<16, testnosep);
+    buffer_list_aggregate_separator(ctx->one_two_three, 1 << 16, testnosep);
     assert_int_equal(ctx->one_two_three->size, 1);
     struct buffer *buf = buffer_list_peek(ctx->one_two_three);
     assert_buf_equals_str(buf, teststr1 teststr2 teststr3);
@@ -228,7 +225,7 @@ test_buffer_list_aggregate_separator_zerolen(void **state)
     struct buffer_list *bl_zerolen = ctx->zero_length_strings;
 
     /* Aggregate all */
-    buffer_list_aggregate_separator(bl_zerolen, 1<<16, testnosep);
+    buffer_list_aggregate_separator(bl_zerolen, 1 << 16, testnosep);
     assert_int_equal(bl_zerolen->size, 1);
     struct buffer *buf = buffer_list_peek(bl_zerolen);
     assert_buf_equals_str(buf, "");
@@ -241,7 +238,7 @@ test_buffer_list_aggregate_separator_emptybuffers(void **state)
     struct buffer_list *bl_emptybuffers = ctx->empty_buffers;
 
     /* Aggregate all */
-    buffer_list_aggregate_separator(bl_emptybuffers, 1<<16, testnosep);
+    buffer_list_aggregate_separator(bl_emptybuffers, 1 << 16, testnosep);
     assert_int_equal(bl_emptybuffers->size, 1);
     struct buffer *buf = buffer_list_peek(bl_emptybuffers);
     assert_int_equal(BLEN(buf), 0);
@@ -345,11 +342,12 @@ test_character_class(void **state)
     assert_string_equal(buf, "There.is...a.nice......year.old.tr..ee.");
 
     strcpy(buf, "There is \x01 a 'nice' \"1234\"\n year old \ntr\x7f ee!");
-    assert_false(string_mod(buf, CC_ALPHA|CC_DIGIT|CC_NEWLINE|CC_SINGLE_QUOTE, CC_DOUBLE_QUOTE|CC_BLANK, '.'));
+    assert_false(string_mod(
+        buf, CC_ALPHA | CC_DIGIT | CC_NEWLINE | CC_SINGLE_QUOTE, CC_DOUBLE_QUOTE | CC_BLANK, '.'));
     assert_string_equal(buf, "There.is...a.'nice'..1234.\n.year.old.\ntr..ee.");
 
     strcpy(buf, "There is a \\'nice\\' \"1234\" [*] year old \ntree!");
-    assert_false(string_mod(buf, CC_PRINT, CC_BACKSLASH|CC_ASTERISK, '.'));
+    assert_false(string_mod(buf, CC_PRINT, CC_BACKSLASH | CC_ASTERISK, '.'));
     assert_string_equal(buf, "There is a .'nice.' \"1234\" [.] year old .tree!");
 }
 
@@ -361,7 +359,7 @@ test_character_string_mod_buf(void **state)
 
     struct buffer buf = alloc_buf_gc(1024, &gc);
 
-    const char test1[] =  "There is a nice 1234\x00 year old tree!";
+    const char test1[] = "There is a nice 1234\x00 year old tree!";
     buf_write(&buf, test1, sizeof(test1));
 
     /* allow the null bytes and string but not the ! */
@@ -433,7 +431,7 @@ test_buffer_chomp(void **state)
     struct gc_arena gc = gc_new();
     struct buffer buf = alloc_buf_gc(1024, &gc);
 
-    const char test1[] =  "There is a nice 1234 year old tree!\n\r";
+    const char test1[] = "There is a nice 1234 year old tree!\n\r";
     buf_write(&buf, test1, sizeof(test1));
     buf_chomp(&buf);
     /* Check that our own method agrees */
@@ -441,7 +439,7 @@ test_buffer_chomp(void **state)
     assert_string_equal(BSTR(&buf), "There is a nice 1234 year old tree!");
 
     struct buffer buf2 = alloc_buf_gc(1024, &gc);
-    const char test2[] =  "CR_RESPONSE,MTIx\x0a\x00";
+    const char test2[] = "CR_RESPONSE,MTIx\x0a\x00";
     buf_write(&buf2, test2, sizeof(test2));
     buf_chomp(&buf2);
 

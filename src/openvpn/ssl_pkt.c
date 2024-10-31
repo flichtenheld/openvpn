@@ -62,8 +62,7 @@ swap_hmac(struct buffer *buf, const struct crypto_options *co, bool incoming)
 {
     ASSERT(co);
 
-    const struct key_ctx *ctx = (incoming ? &co->key_ctx_bi.decrypt :
-                                 &co->key_ctx_bi.encrypt);
+    const struct key_ctx *ctx = (incoming ? &co->key_ctx_bi.decrypt : &co->key_ctx_bi.encrypt);
     ASSERT(ctx->hmac);
 
     {
@@ -118,11 +117,12 @@ swap_hmac(struct buffer *buf, const struct crypto_options *co, bool incoming)
  * @param session_id    session id to use as our session id
  */
 static void
-tls_wrap_control(struct tls_wrap_ctx *ctx, uint8_t header, struct buffer *buf,
+tls_wrap_control(struct tls_wrap_ctx *ctx,
+                 uint8_t header,
+                 struct buffer *buf,
                  struct session_id *session_id)
 {
-    if (ctx->mode == TLS_WRAP_AUTH
-        || ctx->mode == TLS_WRAP_NONE)
+    if (ctx->mode == TLS_WRAP_AUTH || ctx->mode == TLS_WRAP_NONE)
     {
         ASSERT(session_id_write_prepend(session_id, buf));
         ASSERT(buf_write_prepend(buf, &header, sizeof(header)));
@@ -149,8 +149,7 @@ tls_wrap_control(struct tls_wrap_ctx *ctx, uint8_t header, struct buffer *buf,
         if ((header >> P_OPCODE_SHIFT) == P_CONTROL_HARD_RESET_CLIENT_V3
             || (header >> P_OPCODE_SHIFT) == P_CONTROL_WKC_V1)
         {
-            if (!buf_copy(&ctx->work,
-                          ctx->tls_crypt_v2_wkc))
+            if (!buf_copy(&ctx->work, ctx->tls_crypt_v2_wkc))
             {
                 msg(D_TLS_ERRORS, "Could not append tls-crypt-v2 client key");
                 buf->len = 0;
@@ -185,13 +184,13 @@ write_control_auth(struct tls_session *session,
     }
 
     ASSERT(link_socket_actual_defined(&ks->remote_addr));
-    ASSERT(reliable_ack_write
-               (ks->rec_ack, ks->lru_acks, buf, &ks->session_id_remote,
-               max_ack, prepend_ack));
+    ASSERT(reliable_ack_write(
+        ks->rec_ack, ks->lru_acks, buf, &ks->session_id_remote, max_ack, prepend_ack));
 
     msg(D_TLS_DEBUG, "%s(): %s", __func__, packet_opcode_name(opcode));
 
-    tls_wrap_control(tls_session_get_tls_wrap(session, ks->key_id), header, buf, &session->session_id);
+    tls_wrap_control(
+        tls_session_get_tls_wrap(session, ks->key_id), header, buf, &session->session_id);
 
     *to_link_addr = &ks->remote_addr;
 }
@@ -206,8 +205,7 @@ read_control_auth(struct buffer *buf,
     bool ret = false;
 
     const uint8_t opcode = *(BPTR(buf)) >> P_OPCODE_SHIFT;
-    if ((opcode == P_CONTROL_HARD_RESET_CLIENT_V3
-         || opcode == P_CONTROL_WKC_V1)
+    if ((opcode == P_CONTROL_HARD_RESET_CLIENT_V3 || opcode == P_CONTROL_WKC_V1)
         && !tls_crypt_v2_extract_client_key(buf, ctx, opt))
     {
         msg(D_TLS_ERRORS,
@@ -240,14 +238,14 @@ read_control_auth(struct buffer *buf,
                 print_link_socket_actual(from, &gc));
             goto cleanup;
         }
-
     }
     else if (ctx->mode == TLS_WRAP_CRYPT)
     {
         struct buffer tmp = alloc_buf_gc(buf_forward_capacity_total(buf), &gc);
         if (!tls_crypt_unwrap(buf, &tmp, &ctx->opt))
         {
-            msg(D_TLS_ERRORS, "TLS Error: tls-crypt unwrapping failed from %s",
+            msg(D_TLS_ERRORS,
+                "TLS Error: tls-crypt unwrapping failed from %s",
                 print_link_socket_actual(from, &gc));
             goto cleanup;
         }
@@ -258,7 +256,8 @@ read_control_auth(struct buffer *buf,
     else if (ctx->tls_crypt_v2_server_key.cipher)
     {
         /* If tls-crypt-v2 is enabled, require *some* wrapping */
-        msg(D_TLS_ERRORS, "TLS Error: could not determine wrapping from %s",
+        msg(D_TLS_ERRORS,
+            "TLS Error: could not determine wrapping from %s",
             print_link_socket_actual(from, &gc));
         /* TODO Do we want to support using tls-crypt-v2 and no control channel
          * wrapping at all simultaneously?  That would allow server admins to
@@ -315,7 +314,8 @@ tls_pre_decrypt_lite(const struct tls_auth_standalone *tas,
     {
         dmsg(D_TLS_STATE_ERRORS,
              "TLS State Error: Too short packet (length  %d) received from %s",
-             buf->len, print_link_socket_actual(from, &gc));
+             buf->len,
+             print_link_socket_actual(from, &gc));
         goto error;
     }
 
@@ -328,11 +328,8 @@ tls_pre_decrypt_lite(const struct tls_auth_standalone *tas,
      * scrutinize carefully */
 
     /* Allow only the reset packet or the first packet of the actual handshake. */
-    if (op != P_CONTROL_HARD_RESET_CLIENT_V2
-        && op != P_CONTROL_HARD_RESET_CLIENT_V3
-        && op != P_CONTROL_V1
-        && op != P_CONTROL_WKC_V1
-        && op != P_ACK_V1)
+    if (op != P_CONTROL_HARD_RESET_CLIENT_V2 && op != P_CONTROL_HARD_RESET_CLIENT_V3
+        && op != P_CONTROL_V1 && op != P_CONTROL_WKC_V1 && op != P_ACK_V1)
     {
         /*
          * This can occur due to bogus data or DoS packets.
@@ -372,8 +369,7 @@ tls_pre_decrypt_lite(const struct tls_auth_standalone *tas,
     /* HMAC test and unwrapping the encrypted part of the control message
      * into newbuf or just setting newbuf to point to the start of control
      * message */
-    bool status = read_control_auth(&state->newbuf, &state->tls_wrap_tmp,
-                                    from, NULL);
+    bool status = read_control_auth(&state->newbuf, &state->tls_wrap_tmp, from, NULL);
 
     if (!status)
     {
@@ -487,9 +483,11 @@ struct session_id
 calculate_session_id_hmac(struct session_id client_sid,
                           const struct openvpn_sockaddr *from,
                           hmac_ctx_t *hmac,
-                          int handwindow, int offset)
+                          int handwindow,
+                          int offset)
 {
-    union {
+    union
+    {
         uint8_t hmac_result[SHA256_DIGEST_LENGTH];
         struct session_id sid;
     } result;
@@ -497,23 +495,22 @@ calculate_session_id_hmac(struct session_id client_sid,
     /* Get the valid time quantisation for our hmac,
      * we divide time by handwindow/2 and allow the previous
      * and future session time if specified by offset */
-    uint32_t session_id_time = ntohl(now/((handwindow+1)/2) + offset);
+    uint32_t session_id_time = ntohl(now / ((handwindow + 1) / 2) + offset);
 
     hmac_ctx_reset(hmac);
     /* We do not care about endian here since it does not need to be
      * portable */
-    hmac_ctx_update(hmac, (const uint8_t *) &session_id_time,
-                    sizeof(session_id_time));
+    hmac_ctx_update(hmac, (const uint8_t *)&session_id_time, sizeof(session_id_time));
 
     /* add client IP and port */
     switch (from->addr.sa.sa_family)
     {
         case AF_INET:
-            hmac_ctx_update(hmac, (const uint8_t *) &from->addr.in4, sizeof(struct sockaddr_in));
+            hmac_ctx_update(hmac, (const uint8_t *)&from->addr.in4, sizeof(struct sockaddr_in));
             break;
 
         case AF_INET6:
-            hmac_ctx_update(hmac, (const uint8_t *) &from->addr.in6, sizeof(struct sockaddr_in6));
+            hmac_ctx_update(hmac, (const uint8_t *)&from->addr.in6, sizeof(struct sockaddr_in6));
             break;
     }
 
@@ -574,7 +571,7 @@ extract_command_buffer(struct buffer *buf, struct gc_arena *gc)
     }
 
     /* include the NUL byte and ensure NUL termination */
-    cmdlen +=  1;
+    cmdlen += 1;
 
     /* Construct a buffer that only holds the current command and
      * its closing NUL byte */
@@ -589,7 +586,8 @@ extract_command_buffer(struct buffer *buf, struct gc_arena *gc)
      * command string and no newlines */
     if (!string_check_buf(&cmdbuf, CC_PRINT | CC_NULL, CC_CRLF))
     {
-        msg(D_PUSH_ERRORS, "WARNING: Received control with invalid characters: %s",
+        msg(D_PUSH_ERRORS,
+            "WARNING: Received control with invalid characters: %s",
             format_hex(BPTR(&cmdbuf), BLEN(&cmdbuf), 256, gc));
         cmdbuf.len = 0;
     }

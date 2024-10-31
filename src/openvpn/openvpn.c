@@ -120,8 +120,7 @@ init_early(struct context *c)
      * printing depends on it */
     for (int j = 1; j < MAX_PARMS && c->options.providers.names[j]; j++)
     {
-        c->options.providers.providers[j] =
-            crypto_load_provider(c->options.providers.names[j]);
+        c->options.providers.providers[j] = crypto_load_provider(c->options.providers.names[j]);
     }
 }
 
@@ -130,8 +129,7 @@ uninit_early(struct context *c)
 {
     for (int j = 1; j < MAX_PARMS && c->options.providers.providers[j]; j++)
     {
-        crypto_unload_provider(c->options.providers.names[j],
-                               c->options.providers.providers[j]);
+        crypto_unload_provider(c->options.providers.names[j], c->options.providers.providers[j]);
     }
     net_ctx_free(&c->net_ctx);
 }
@@ -157,14 +155,15 @@ uninit_early(struct context *c)
  * @param argc - Commandline argument count.
  * @param argv - Commandline argument values.
  */
-static
-int
+static int
 openvpn_main(int argc, char *argv[])
 {
     struct context c;
 
 #if PEDANTIC
-    fprintf(stderr, "Sorry, I was built with --enable-pedantic and I am incapable of doing any real work!\n");
+    fprintf(
+        stderr,
+        "Sorry, I was built with --enable-pedantic and I am incapable of doing any real work!\n");
     return 1;
 #endif
 
@@ -333,15 +332,13 @@ openvpn_main(int argc, char *argv[])
 
                 /* pass restart status to management subsystem */
                 signal_restart_status(c.sig);
-            }
-            while (signal_reset(c.sig, SIGUSR1) == SIGUSR1);
+            } while (signal_reset(c.sig, SIGUSR1) == SIGUSR1);
 
             env_set_destroy(c.es);
             uninit_options(&c.options);
             gc_reset(&c.gc);
             uninit_early(&c);
-        }
-        while (signal_reset(c.sig, SIGHUP) == SIGHUP);
+        } while (signal_reset(c.sig, SIGHUP) == SIGHUP);
     }
 
     context_gc_free(&c);
@@ -366,7 +363,7 @@ wmain(int argc, wchar_t *wargv[])
     int ret;
     int i;
 
-    if ((argv = calloc(argc+1, sizeof(char *))) == NULL)
+    if ((argv = calloc(argc + 1, sizeof(char *))) == NULL)
     {
         return 1;
     }

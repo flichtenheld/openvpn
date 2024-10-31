@@ -102,8 +102,10 @@ void net_ctx_free(openvpn_net_ctx_t *ctx);
  *
  * @return          0 on success, negative error code on error
  */
-int net_iface_new(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                  const char *type, void *arg);
+int net_iface_new(openvpn_net_ctx_t *ctx,
+                  const openvpn_net_iface_t *iface,
+                  const char *type,
+                  void *arg);
 
 /**
  * Retrieve the interface type
@@ -114,8 +116,7 @@ int net_iface_new(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_iface_type(openvpn_net_ctx_t *ctx, const char *iface,
-                   char type[IFACE_TYPE_LEN_MAX]);
+int net_iface_type(openvpn_net_ctx_t *ctx, const char *iface, char type[IFACE_TYPE_LEN_MAX]);
 
 /**
  * Remove an interface
@@ -135,8 +136,7 @@ int net_iface_del(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface);
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_iface_up(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                 bool up);
+int net_iface_up(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface, bool up);
 
 /**
  * Set the MTU for an interface
@@ -147,8 +147,7 @@ int net_iface_up(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_iface_mtu_set(openvpn_net_ctx_t *ctx,
-                      const openvpn_net_iface_t *iface, uint32_t mtu);
+int net_iface_mtu_set(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface, uint32_t mtu);
 
 /**
  * Set the Link Layer (Ethernet) address of the TAP interface
@@ -159,8 +158,7 @@ int net_iface_mtu_set(openvpn_net_ctx_t *ctx,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_addr_ll_set(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                    uint8_t *addr);
+int net_addr_ll_set(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface, uint8_t *addr);
 
 /**
  * Add an IPv4 address to an interface
@@ -172,8 +170,10 @@ int net_addr_ll_set(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_addr_v4_add(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                    const in_addr_t *addr, int prefixlen);
+int net_addr_v4_add(openvpn_net_ctx_t *ctx,
+                    const openvpn_net_iface_t *iface,
+                    const in_addr_t *addr,
+                    int prefixlen);
 
 /**
  * Add an IPv6 address to an interface
@@ -186,8 +186,10 @@ int net_addr_v4_add(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  * @return          0 on success, a negative error code otherwise
  */
 
-int net_addr_v6_add(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                    const struct in6_addr *addr, int prefixlen);
+int net_addr_v6_add(openvpn_net_ctx_t *ctx,
+                    const openvpn_net_iface_t *iface,
+                    const struct in6_addr *addr,
+                    int prefixlen);
 
 /**
  * Remove an IPv4 from an interface
@@ -198,8 +200,10 @@ int net_addr_v6_add(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_addr_v4_del(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                    const in_addr_t *addr, int prefixlen);
+int net_addr_v4_del(openvpn_net_ctx_t *ctx,
+                    const openvpn_net_iface_t *iface,
+                    const in_addr_t *addr,
+                    int prefixlen);
 
 /**
  * Remove an IPv6 from an interface
@@ -210,8 +214,10 @@ int net_addr_v4_del(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_addr_v6_del(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
-                    const struct in6_addr *addr, int prefixlen);
+int net_addr_v6_del(openvpn_net_ctx_t *ctx,
+                    const openvpn_net_iface_t *iface,
+                    const struct in6_addr *addr,
+                    int prefixlen);
 
 /**
  * Add a point-to-point IPv4 address to an interface
@@ -225,7 +231,8 @@ int net_addr_v6_del(openvpn_net_ctx_t *ctx, const openvpn_net_iface_t *iface,
  */
 int net_addr_ptp_v4_add(openvpn_net_ctx_t *ctx,
                         const openvpn_net_iface_t *iface,
-                        const in_addr_t *local, const in_addr_t *remote);
+                        const in_addr_t *local,
+                        const in_addr_t *remote);
 
 /**
  * Remove a point-to-point IPv4 address from an interface
@@ -239,7 +246,8 @@ int net_addr_ptp_v4_add(openvpn_net_ctx_t *ctx,
  */
 int net_addr_ptp_v4_del(openvpn_net_ctx_t *ctx,
                         const openvpn_net_iface_t *iface,
-                        const in_addr_t *local, const in_addr_t *remote);
+                        const in_addr_t *local,
+                        const in_addr_t *remote);
 
 #endif /* ENABLE_SITNL || ENABLE_IPROUTE */
 
@@ -258,9 +266,12 @@ int net_addr_ptp_v4_del(openvpn_net_ctx_t *ctx,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
-                     int prefixlen, const in_addr_t *gw,
-                     const openvpn_net_iface_t *iface, uint32_t table,
+int net_route_v4_add(openvpn_net_ctx_t *ctx,
+                     const in_addr_t *dst,
+                     int prefixlen,
+                     const in_addr_t *gw,
+                     const openvpn_net_iface_t *iface,
+                     uint32_t table,
                      int metric);
 
 /**
@@ -277,28 +288,12 @@ int net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_route_v6_add(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
-                     int prefixlen, const struct in6_addr *gw,
+int net_route_v6_add(openvpn_net_ctx_t *ctx,
+                     const struct in6_addr *dst,
+                     int prefixlen,
+                     const struct in6_addr *gw,
                      const openvpn_net_iface_t *iface,
-                     uint32_t table, int metric);
-
-/**
- * Delete a route for an IPv4 address/network
- *
- * @param ctx       the implementation specific context
- * @param dst       the destination of the route
- * @param prefixlen the length of the prefix of the destination
- * @param gw        the gateway for this route
- * @param iface     the interface for this route (can be NULL)
- * @param table     the table to add this route to (if 0, will be added to the
- *                  main table)
- * @param metric    the metric associated with the route
- *
- * @return          0 on success, a negative error code otherwise
- */
-int net_route_v4_del(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
-                     int prefixlen, const in_addr_t *gw,
-                     const openvpn_net_iface_t *iface, uint32_t table,
+                     uint32_t table,
                      int metric);
 
 /**
@@ -315,10 +310,35 @@ int net_route_v4_del(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
  *
  * @return          0 on success, a negative error code otherwise
  */
-int net_route_v6_del(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
-                     int prefixlen, const struct in6_addr *gw,
+int net_route_v4_del(openvpn_net_ctx_t *ctx,
+                     const in_addr_t *dst,
+                     int prefixlen,
+                     const in_addr_t *gw,
                      const openvpn_net_iface_t *iface,
-                     uint32_t table, int metric);
+                     uint32_t table,
+                     int metric);
+
+/**
+ * Delete a route for an IPv4 address/network
+ *
+ * @param ctx       the implementation specific context
+ * @param dst       the destination of the route
+ * @param prefixlen the length of the prefix of the destination
+ * @param gw        the gateway for this route
+ * @param iface     the interface for this route (can be NULL)
+ * @param table     the table to add this route to (if 0, will be added to the
+ *                  main table)
+ * @param metric    the metric associated with the route
+ *
+ * @return          0 on success, a negative error code otherwise
+ */
+int net_route_v6_del(openvpn_net_ctx_t *ctx,
+                     const struct in6_addr *dst,
+                     int prefixlen,
+                     const struct in6_addr *gw,
+                     const openvpn_net_iface_t *iface,
+                     uint32_t table,
+                     int metric);
 
 #endif /* ENABLE_SITNL || ENABLE_IPROUTE || TARGET_FREEBSD */
 
@@ -335,8 +355,10 @@ int net_route_v6_del(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
  *
  * @return              0 on success, a negative error code otherwise
  */
-int net_route_v4_best_gw(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
-                         in_addr_t *best_gw, openvpn_net_iface_t *best_iface);
+int net_route_v4_best_gw(openvpn_net_ctx_t *ctx,
+                         const in_addr_t *dst,
+                         in_addr_t *best_gw,
+                         openvpn_net_iface_t *best_iface);
 
 /**
  * Retrieve the gateway and outgoing interface for the specified IPv6
@@ -349,7 +371,8 @@ int net_route_v4_best_gw(openvpn_net_ctx_t *ctx, const in_addr_t *dst,
  *
  * @return              0 on success, a negative error code otherwise
  */
-int net_route_v6_best_gw(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
+int net_route_v6_best_gw(openvpn_net_ctx_t *ctx,
+                         const struct in6_addr *dst,
                          struct in6_addr *best_gw,
                          openvpn_net_iface_t *best_iface);
 

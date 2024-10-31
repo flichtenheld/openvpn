@@ -49,7 +49,7 @@
 #include <mbedtls/x509_crt.h>
 
 #if HAVE_MBEDTLS_PSA_CRYPTO_H
-    #include <psa/crypto.h>
+#include <psa/crypto.h>
 #endif
 
 #if MBEDTLS_VERSION_NUMBER >= 0x03000000
@@ -105,8 +105,10 @@ mbedtls_compat_ctr_drbg_update(mbedtls_ctr_drbg_context *ctx,
 }
 
 static inline int
-mbedtls_compat_pk_check_pair(const mbedtls_pk_context *pub, const mbedtls_pk_context *prv,
-                             int (*f_rng)(void *, unsigned char *, size_t), void *p_rng)
+mbedtls_compat_pk_check_pair(const mbedtls_pk_context *pub,
+                             const mbedtls_pk_context *prv,
+                             int (*f_rng)(void *, unsigned char *, size_t),
+                             void *p_rng)
 {
 #if MBEDTLS_VERSION_NUMBER < 0x03020100
     return mbedtls_pk_check_pair(pub, prv);
@@ -117,9 +119,12 @@ mbedtls_compat_pk_check_pair(const mbedtls_pk_context *pub, const mbedtls_pk_con
 
 static inline int
 mbedtls_compat_pk_parse_key(mbedtls_pk_context *ctx,
-                            const unsigned char *key, size_t keylen,
-                            const unsigned char *pwd, size_t pwdlen,
-                            int (*f_rng)(void *, unsigned char *, size_t), void *p_rng)
+                            const unsigned char *key,
+                            size_t keylen,
+                            const unsigned char *pwd,
+                            size_t pwdlen,
+                            int (*f_rng)(void *, unsigned char *, size_t),
+                            void *p_rng)
 {
 #if MBEDTLS_VERSION_NUMBER < 0x03020100
     return mbedtls_pk_parse_key(ctx, key, keylen, pwd, pwdlen);
@@ -130,8 +135,10 @@ mbedtls_compat_pk_parse_key(mbedtls_pk_context *ctx,
 
 static inline int
 mbedtls_compat_pk_parse_keyfile(mbedtls_pk_context *ctx,
-                                const char *path, const char *password,
-                                int (*f_rng)(void *, unsigned char *, size_t), void *p_rng)
+                                const char *path,
+                                const char *password,
+                                int (*f_rng)(void *, unsigned char *, size_t),
+                                void *p_rng)
 {
 #if MBEDTLS_VERSION_NUMBER < 0x03020100
     return mbedtls_pk_parse_keyfile(ctx, path, password);
@@ -141,8 +148,9 @@ mbedtls_compat_pk_parse_keyfile(mbedtls_pk_context *ctx,
 }
 
 #if MBEDTLS_VERSION_NUMBER < 0x03020100
-typedef enum {
-    MBEDTLS_SSL_VERSION_UNKNOWN, /*!< Context not in use or version not yet negotiated. */
+typedef enum
+{
+    MBEDTLS_SSL_VERSION_UNKNOWN,         /*!< Context not in use or version not yet negotiated. */
     MBEDTLS_SSL_VERSION_TLS1_2 = 0x0303, /*!< (D)TLS 1.2 */
     MBEDTLS_SSL_VERSION_TLS1_3 = 0x0304, /*!< (D)TLS 1.3 */
 } mbedtls_ssl_protocol_version;

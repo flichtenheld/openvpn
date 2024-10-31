@@ -18,7 +18,7 @@
 
 const char *auth_token_pem_name = "OpenVPN auth-token server key";
 
-#define AUTH_TOKEN_SESSION_ID_LEN 12
+#define AUTH_TOKEN_SESSION_ID_LEN        12
 #define AUTH_TOKEN_SESSION_ID_BASE64_LEN (AUTH_TOKEN_SESSION_ID_LEN * 8 / 6)
 
 #if AUTH_TOKEN_SESSION_ID_LEN % 3
@@ -35,7 +35,8 @@ auth_token_kt(void)
 }
 
 void
-add_session_token_env(struct tls_session *session, struct tls_multi *multi,
+add_session_token_env(struct tls_session *session,
+                      struct tls_multi *multi,
                       const struct user_pass *up)
 {
     if (!multi->opt.auth_token_generate)
@@ -53,7 +54,7 @@ add_session_token_env(struct tls_session *session, struct tls_multi *multi,
     }
     else if (auth_token_state_flags & AUTH_TOKEN_HMAC_OK)
     {
-        switch (auth_token_state_flags & (AUTH_TOKEN_VALID_EMPTYUSER|AUTH_TOKEN_EXPIRED))
+        switch (auth_token_state_flags & (AUTH_TOKEN_VALID_EMPTYUSER | AUTH_TOKEN_EXPIRED))
         {
             case 0:
                 state = "Authenticated";
@@ -107,9 +108,10 @@ add_session_token_env(struct tls_session *session, struct tls_multi *multi,
      * in the encoding
      */
 
-    char session_id[AUTH_TOKEN_SESSION_ID_LEN*2] = {0};
-    memcpy(session_id, session_id_source + strlen(SESSION_ID_PREFIX),
-           AUTH_TOKEN_SESSION_ID_LEN*8/6);
+    char session_id[AUTH_TOKEN_SESSION_ID_LEN * 2] = { 0 };
+    memcpy(session_id,
+           session_id_source + strlen(SESSION_ID_PREFIX),
+           AUTH_TOKEN_SESSION_ID_LEN * 8 / 6);
 
     setenv_str(session->opt->es, "session_id", session_id);
 }
@@ -121,8 +123,7 @@ auth_token_write_server_key_file(const char *filename)
 }
 
 void
-auth_token_init_secret(struct key_ctx *key_ctx, const char *key_file,
-                       bool key_inline)
+auth_token_init_secret(struct key_ctx *key_ctx, const char *key_file, bool key_inline)
 {
     struct key_type kt = auth_token_kt();
 
@@ -131,14 +132,12 @@ auth_token_init_secret(struct key_ctx *key_ctx, const char *key_file,
     bool key_loaded = false;
     if (key_file)
     {
-        key_loaded = read_pem_key_file(&server_secret_key,
-                                       auth_token_pem_name,
-                                       key_file, key_inline);
+        key_loaded =
+            read_pem_key_file(&server_secret_key, auth_token_pem_name, key_file, key_inline);
     }
     else
     {
-        key_loaded = generate_ephemeral_key(&server_secret_key,
-                                            auth_token_pem_name);
+        key_loaded = generate_ephemeral_key(&server_secret_key, auth_token_pem_name);
     }
 
     if (!key_loaded)
@@ -169,7 +168,7 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
     int64_t initial_timestamp = timestamp;
 
     hmac_ctx_t *ctx = multi->opt.auth_token_key.hmac;
-    ASSERT(hmac_ctx_size(ctx) == 256/8);
+    ASSERT(hmac_ctx_size(ctx) == 256 / 8);
 
     uint8_t sessid[AUTH_TOKEN_SESSION_ID_LEN];
 
@@ -185,7 +184,7 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
         char *initial_token_copy = string_alloc(multi->auth_token_initial, &gc);
 
         char *old_sessid = initial_token_copy + strlen(SESSION_ID_PREFIX);
-        char *old_tstamp_initial = old_sessid + AUTH_TOKEN_SESSION_ID_LEN*8/6;
+        char *old_tstamp_initial = old_sessid + AUTH_TOKEN_SESSION_ID_LEN * 8 / 6;
 
         /*
          * We null terminate the old token just after the session ID to let
@@ -197,12 +196,14 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
         memcpy(&initial_timestamp, &old_tstamp_decode, sizeof(initial_timestamp));
 
         old_tstamp_initial[0] = '\0';
-        ASSERT(openvpn_base64_decode(old_sessid, sessid, AUTH_TOKEN_SESSION_ID_LEN) == AUTH_TOKEN_SESSION_ID_LEN);
+        ASSERT(openvpn_base64_decode(old_sessid, sessid, AUTH_TOKEN_SESSION_ID_LEN)
+               == AUTH_TOKEN_SESSION_ID_LEN);
     }
     else if (!rand_bytes(sessid, AUTH_TOKEN_SESSION_ID_LEN))
     {
-        msg( M_FATAL, "Failed to get enough randomness for "
-             "authentication token");
+        msg(M_FATAL,
+            "Failed to get enough randomness for "
+            "authentication token");
     }
 
     /* Calculate the HMAC */
@@ -210,7 +211,7 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
      * with \0 in them is asking for troubles in so many ways anyway that we
      * ignore that corner case here
      */
-    uint8_t hmac_output[256/8];
+    uint8_t hmac_output[256 / 8];
 
     hmac_ctx_reset(ctx);
 
@@ -222,20 +223,20 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
     struct key_state *ks = &multi->session[TM_ACTIVE].key[KS_PRIMARY];
     if (ks->auth_token_state_flags & AUTH_TOKEN_VALID_EMPTYUSER)
     {
-        hmac_ctx_update(ctx, (const uint8_t *) "", 0);
+        hmac_ctx_update(ctx, (const uint8_t *)"", 0);
     }
     else
     {
-        hmac_ctx_update(ctx, (uint8_t *) up->username, (int) strlen(up->username));
+        hmac_ctx_update(ctx, (uint8_t *)up->username, (int)strlen(up->username));
     }
     hmac_ctx_update(ctx, sessid, AUTH_TOKEN_SESSION_ID_LEN);
-    hmac_ctx_update(ctx, (uint8_t *) &initial_timestamp, sizeof(initial_timestamp));
-    hmac_ctx_update(ctx, (uint8_t *) &timestamp, sizeof(timestamp));
+    hmac_ctx_update(ctx, (uint8_t *)&initial_timestamp, sizeof(initial_timestamp));
+    hmac_ctx_update(ctx, (uint8_t *)&timestamp, sizeof(timestamp));
     hmac_ctx_final(ctx, hmac_output);
 
     /* Construct the unencoded session token */
-    struct buffer token = alloc_buf_gc(
-        2*sizeof(uint64_t) + AUTH_TOKEN_SESSION_ID_LEN + 256/8, &gc);
+    struct buffer token =
+        alloc_buf_gc(2 * sizeof(uint64_t) + AUTH_TOKEN_SESSION_ID_LEN + 256 / 8, &gc);
 
     ASSERT(buf_write(&token, sessid, sizeof(sessid)));
     ASSERT(buf_write(&token, &initial_timestamp, sizeof(initial_timestamp)));
@@ -245,8 +246,8 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
     char *b64output = NULL;
     openvpn_base64_encode(BPTR(&token), BLEN(&token), &b64output);
 
-    struct buffer session_token = alloc_buf_gc(
-        strlen(SESSION_ID_PREFIX) + strlen(b64output) + 1, &gc);
+    struct buffer session_token =
+        alloc_buf_gc(strlen(SESSION_ID_PREFIX) + strlen(b64output) + 1, &gc);
 
     ASSERT(buf_write(&session_token, SESSION_ID_PREFIX, strlen(SESSION_ID_PREFIX)));
     ASSERT(buf_write(&session_token, b64output, (int)strlen(b64output)));
@@ -258,8 +259,7 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
     free(multi->auth_token);
     multi->auth_token = strdup((char *)BPTR(&session_token));
 
-    dmsg(D_SHOW_KEYS, "Generated token for client: %s (%s)",
-         multi->auth_token, up->username);
+    dmsg(D_SHOW_KEYS, "Generated token for client: %s (%s)", multi->auth_token, up->username);
 
     if (!multi->auth_token_initial)
     {
@@ -277,22 +277,21 @@ generate_auth_token(const struct user_pass *up, struct tls_multi *multi)
 static bool
 check_hmac_token(hmac_ctx_t *ctx, const uint8_t *b64decoded, const char *username)
 {
-    ASSERT(hmac_ctx_size(ctx) == 256/8);
+    ASSERT(hmac_ctx_size(ctx) == 256 / 8);
 
-    uint8_t hmac_output[256/8];
+    uint8_t hmac_output[256 / 8];
 
     hmac_ctx_reset(ctx);
-    hmac_ctx_update(ctx, (uint8_t *) username, (int)strlen(username));
-    hmac_ctx_update(ctx, b64decoded, TOKEN_DATA_LEN - 256/8);
+    hmac_ctx_update(ctx, (uint8_t *)username, (int)strlen(username));
+    hmac_ctx_update(ctx, b64decoded, TOKEN_DATA_LEN - 256 / 8);
     hmac_ctx_final(ctx, hmac_output);
 
-    const uint8_t *hmac = b64decoded + TOKEN_DATA_LEN - 256/8;
+    const uint8_t *hmac = b64decoded + TOKEN_DATA_LEN - 256 / 8;
     return memcmp_constant_time(&hmac_output, hmac, 32) == 0;
 }
 
 unsigned int
-verify_auth_token(struct user_pass *up, struct tls_multi *multi,
-                  struct tls_session *session)
+verify_auth_token(struct user_pass *up, struct tls_multi *multi, struct tls_session *session)
 {
     /*
      * Base64 is <= input and input is < USER_PASS_LEN, so using USER_PASS_LEN
@@ -300,8 +299,8 @@ verify_auth_token(struct user_pass *up, struct tls_multi *multi,
      */
     ASSERT(up && !up->protected);
     uint8_t b64decoded[USER_PASS_LEN];
-    int decoded_len = openvpn_base64_decode(up->password + strlen(SESSION_ID_PREFIX),
-                                            b64decoded, USER_PASS_LEN);
+    int decoded_len =
+        openvpn_base64_decode(up->password + strlen(SESSION_ID_PREFIX), b64decoded, USER_PASS_LEN);
 
     /*
      * Ensure that the decoded data is the size of the
@@ -309,8 +308,7 @@ verify_auth_token(struct user_pass *up, struct tls_multi *multi,
      */
     if (decoded_len != TOKEN_DATA_LEN)
     {
-        msg(M_WARN, "ERROR: --auth-token wrong size (%d!=%d)",
-            decoded_len, (int) TOKEN_DATA_LEN);
+        msg(M_WARN, "ERROR: --auth-token wrong size (%d!=%d)", decoded_len, (int)TOKEN_DATA_LEN);
         return 0;
     }
 
@@ -343,19 +341,19 @@ verify_auth_token(struct user_pass *up, struct tls_multi *multi,
     }
     else
     {
-        msg(M_WARN, "--auth-gen-token: HMAC on token from client failed (%s)",
-            up->username);
+        msg(M_WARN, "--auth-gen-token: HMAC on token from client failed (%s)", up->username);
         return 0;
     }
 
     /* Accept session tokens only if their timestamp is in the acceptable range
      * for renegotiations */
-    bool in_renegotiation_time = now >= timestamp
-                                 && now < timestamp + 2 * session->opt->auth_token_renewal;
+    bool in_renegotiation_time =
+        now >= timestamp && now < timestamp + 2 * session->opt->auth_token_renewal;
 
     if (!in_renegotiation_time)
     {
-        msg(M_WARN, "Timestamp (%" PRIu64 ") of auth-token is out of the renewal window",
+        msg(M_WARN,
+            "Timestamp (%" PRIu64 ") of auth-token is out of the renewal window",
             timestamp);
         ret |= AUTH_TOKEN_EXPIRED;
     }
@@ -363,14 +361,15 @@ verify_auth_token(struct user_pass *up, struct tls_multi *multi,
     /* Sanity check the initial timestamp */
     if (timestamp < timestamp_initial)
     {
-        msg(M_WARN, "Initial timestamp (%" PRIu64 ") in token from client earlier than "
+        msg(M_WARN,
+            "Initial timestamp (%" PRIu64 ") in token from client earlier than "
             "current timestamp %" PRIu64 ". Broken/unsynchronised clock?",
-            timestamp_initial, timestamp);
+            timestamp_initial,
+            timestamp);
         ret |= AUTH_TOKEN_EXPIRED;
     }
 
-    if (multi->opt.auth_token_lifetime
-        && now > timestamp_initial + multi->opt.auth_token_lifetime)
+    if (multi->opt.auth_token_lifetime && now > timestamp_initial + multi->opt.auth_token_lifetime)
     {
         ret |= AUTH_TOKEN_EXPIRED;
     }
@@ -387,10 +386,12 @@ verify_auth_token(struct user_pass *up, struct tls_multi *multi,
      * This also compares the prefix and session part of the
      * tokens, which should be identical if the session ID stayed the same */
     if (multi->auth_token_initial
-        && memcmp_constant_time(multi->auth_token_initial, up->password,
+        && memcmp_constant_time(multi->auth_token_initial,
+                                up->password,
                                 strlen(SESSION_ID_PREFIX) + AUTH_TOKEN_SESSION_ID_BASE64_LEN))
     {
-        msg(M_WARN, "--auth-gen-token: session id in token changed (Rejecting "
+        msg(M_WARN,
+            "--auth-gen-token: session id in token changed (Rejecting "
             "token.");
         ret = 0;
     }
@@ -409,8 +410,7 @@ wipe_auth_token(struct tls_multi *multi)
         }
         if (multi->auth_token_initial)
         {
-            secure_memzero(multi->auth_token_initial,
-                           strlen(multi->auth_token_initial));
+            secure_memzero(multi->auth_token_initial, strlen(multi->auth_token_initial));
             free(multi->auth_token_initial);
         }
         multi->auth_token = NULL;
@@ -437,7 +437,8 @@ check_send_auth_token(struct context *c)
 
     if (!multi->auth_token_initial)
     {
-        msg(D_SHOW_KEYS, "initial auth-token not generated yet, skipping "
+        msg(D_SHOW_KEYS,
+            "initial auth-token not generated yet, skipping "
             "auth-token renewal.");
         return;
     }

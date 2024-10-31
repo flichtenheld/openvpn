@@ -11,7 +11,6 @@
 static void
 pass_any_null_param__returns_null(void **state)
 {
-
     char DUMMY[] = "DUMMY";
 
     assert_null(searchandreplace(NULL, DUMMY, DUMMY));
@@ -22,7 +21,6 @@ pass_any_null_param__returns_null(void **state)
 static void
 pass_any_empty_string__returns_null(void **state)
 {
-
     char DUMMY[] = "DUMMY";
     char EMPTY[] = "";
 

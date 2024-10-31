@@ -34,12 +34,14 @@
  * Handle environmental variable lists
  */
 
-struct env_item {
+struct env_item
+{
     char *string;
     struct env_item *next;
 };
 
-struct env_set {
+struct env_set
+{
     struct gc_arena *gc;
     struct env_item *list;
 };

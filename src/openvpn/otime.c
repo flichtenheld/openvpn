@@ -45,7 +45,8 @@ void
 update_now(const time_t system_time)
 {
     const int forward_threshold = 86400; /* threshold at which to dampen forward jumps */
-    const int backward_trigger  = 10;  /* backward jump must be >= this many seconds before we adjust */
+    const int backward_trigger =
+        10; /* backward jump must be >= this many seconds before we adjust */
     time_t real_time = system_time + now_adj;
 
     if (real_time > now)
@@ -82,9 +83,7 @@ const char *
 tv_string(const struct timeval *tv, struct gc_arena *gc)
 {
     struct buffer out = alloc_buf_gc(64, gc);
-    buf_printf(&out, "[%" PRIi64 "/%ld]",
-               (int64_t)tv->tv_sec,
-               (long)tv->tv_usec);
+    buf_printf(&out, "[%" PRIi64 "/%ld]", (int64_t)tv->tv_sec, (long)tv->tv_usec);
     return BSTR(&out);
 }
 
@@ -96,10 +95,7 @@ tv_string(const struct timeval *tv, struct gc_arena *gc)
 const char *
 tv_string_abs(const struct timeval *tv, struct gc_arena *gc)
 {
-    return time_string((time_t) tv->tv_sec,
-                       (long) tv->tv_usec,
-                       true,
-                       gc);
+    return time_string((time_t)tv->tv_sec, (long)tv->tv_usec, true, gc);
 }
 
 /* format a time_t as ascii, or use current time if 0 */
@@ -123,9 +119,14 @@ time_string(time_t t, long usec, bool show_usec, struct gc_arena *gc)
     t = tv.tv_sec;
     struct tm *tm = localtime(&t);
 
-    buf_printf(&out, "%04d-%02d-%02d %02d:%02d:%02d",
-               tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-               tm->tm_hour, tm->tm_min, tm->tm_sec);
+    buf_printf(&out,
+               "%04d-%02d-%02d %02d:%02d:%02d",
+               tm->tm_year + 1900,
+               tm->tm_mon + 1,
+               tm->tm_mday,
+               tm->tm_hour,
+               tm->tm_min,
+               tm->tm_sec);
 
     if (show_usec && tv.tv_usec)
     {
@@ -195,7 +196,8 @@ time_test(void)
         t = time(NULL);
         gettimeofday(&tv, NULL);
 #if 1
-        msg(M_INFO, "t=%" PRIi64 " s=%" PRIi64 " us=%ld",
+        msg(M_INFO,
+            "t=%" PRIi64 " s=%" PRIi64 " us=%ld",
             (int64_t)t,
             (int64_t)tv.tv_sec,
             (long)tv.tv_usec);

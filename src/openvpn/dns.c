@@ -59,7 +59,7 @@ dns_server_addr_parse(struct dns_server *server, const char *addr)
         return false;
     }
 
-    char addrcopy[INET6_ADDRSTRLEN] = {0};
+    char addrcopy[INET6_ADDRSTRLEN] = { 0 };
     size_t copylen = 0;
     in_port_t port = 0;
     sa_family_t af;
@@ -196,13 +196,14 @@ dns_server_get(struct dns_server **entry, long priority, struct gc_arena *gc)
 bool
 dns_options_verify(int msglevel, const struct dns_options *o)
 {
-    const struct dns_server *server =
-        o->servers ? o->servers : o->servers_prepull;
+    const struct dns_server *server = o->servers ? o->servers : o->servers_prepull;
     while (server)
     {
         if (server->addr_count == 0)
         {
-            msg(msglevel, "ERROR: dns server %ld does not have an address assigned", server->priority);
+            msg(msglevel,
+                "ERROR: dns server %ld does not have an address assigned",
+                server->priority);
             return false;
         }
         server = server->next;
@@ -342,9 +343,7 @@ transport_value(const enum dns_server_transport transport)
 }
 
 static void
-setenv_dns_option(struct env_set *es,
-                  const char *format, int i, int j,
-                  const char *value)
+setenv_dns_option(struct env_set *es, const char *format, int i, int j, const char *value)
 {
     char name[64];
     bool name_ok = false;
@@ -385,18 +384,24 @@ setenv_dns_options(const struct dns_options *o, struct env_set *es)
         {
             if (s->addr[j].family == AF_INET)
             {
-                setenv_dns_option(es, "dns_server_%d_address_%d", i, j + 1,
+                setenv_dns_option(es,
+                                  "dns_server_%d_address_%d",
+                                  i,
+                                  j + 1,
                                   print_in_addr_t(s->addr[j].in.a4.s_addr, IA_NET_ORDER, &gc));
             }
             else
             {
-                setenv_dns_option(es, "dns_server_%d_address_%d", i, j + 1,
+                setenv_dns_option(es,
+                                  "dns_server_%d_address_%d",
+                                  i,
+                                  j + 1,
                                   print_in6_addr(s->addr[j].in.a6, 0, &gc));
             }
             if (s->addr[j].port)
             {
-                setenv_dns_option(es, "dns_server_%d_port_%d", i, j + 1,
-                                  print_in_port_t(s->addr[j].port, &gc));
+                setenv_dns_option(
+                    es, "dns_server_%d_port_%d", i, j + 1, print_in_port_t(s->addr[j].port, &gc));
             }
         }
 
@@ -410,14 +415,12 @@ setenv_dns_options(const struct dns_options *o, struct env_set *es)
 
         if (s->dnssec)
         {
-            setenv_dns_option(es, "dns_server_%d_dnssec", i, -1,
-                              dnssec_value(s->dnssec));
+            setenv_dns_option(es, "dns_server_%d_dnssec", i, -1, dnssec_value(s->dnssec));
         }
 
         if (s->transport)
         {
-            setenv_dns_option(es, "dns_server_%d_transport", i, -1,
-                              transport_value(s->transport));
+            setenv_dns_option(es, "dns_server_%d_transport", i, -1, transport_value(s->transport));
         }
         if (s->sni)
         {

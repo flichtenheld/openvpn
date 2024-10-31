@@ -30,12 +30,11 @@ static wchar_t win_sys_path[MAX_PATH];
 static DWORD
 GetRegString(HKEY key, LPCWSTR value, LPWSTR data, DWORD size, LPCWSTR default_value)
 {
-    LONG status = RegGetValue(key, NULL, value, RRF_RT_REG_SZ,
-                              NULL, (LPBYTE) data, &size);
+    LONG status = RegGetValue(key, NULL, value, RRF_RT_REG_SZ, NULL, (LPBYTE)data, &size);
 
     if (status == ERROR_FILE_NOT_FOUND && default_value)
     {
-        size_t len = size/sizeof(data[0]);
+        size_t len = size / sizeof(data[0]);
         if (swprintf(data, len, default_value))
         {
             status = ERROR_SUCCESS;
@@ -45,7 +44,11 @@ GetRegString(HKEY key, LPCWSTR value, LPWSTR data, DWORD size, LPCWSTR default_v
     if (status != ERROR_SUCCESS)
     {
         SetLastError(status);
-        return MsgToEventLog(M_SYSERR, L"Error querying registry value: HKLM\\SOFTWARE\\" _L(PACKAGE_NAME) L"%ls\\%ls", service_instance, value);
+        return MsgToEventLog(
+            M_SYSERR,
+            L"Error querying registry value: HKLM\\SOFTWARE\\" _L(PACKAGE_NAME) L"%ls\\%ls",
+            service_instance,
+            value);
     }
 
     return ERROR_SUCCESS;
@@ -69,7 +72,8 @@ GetOpenvpnSettings(settings_t *s)
     if (status != ERROR_SUCCESS)
     {
         SetLastError(status);
-        return MsgToEventLog(M_SYSERR, L"Could not open Registry key HKLM\\%ls not found", reg_path);
+        return MsgToEventLog(
+            M_SYSERR, L"Could not open Registry key HKLM\\%ls not found", reg_path);
     }
 
     /* The default value of REG_KEY is the install path */
@@ -80,8 +84,7 @@ GetOpenvpnSettings(settings_t *s)
         goto out;
     }
 
-    swprintf(default_value, _countof(default_value), L"%ls\\bin\\openvpn.exe",
-             install_path);
+    swprintf(default_value, _countof(default_value), L"%ls\\bin\\openvpn.exe", install_path);
     error = GetRegString(key, L"exe_path", s->exe_path, sizeof(s->exe_path), default_value);
     if (error != ERROR_SUCCESS)
     {
@@ -89,15 +92,13 @@ GetOpenvpnSettings(settings_t *s)
     }
 
     swprintf(default_value, _countof(default_value), L"%ls\\config", install_path);
-    error = GetRegString(key, L"config_dir", s->config_dir, sizeof(s->config_dir),
-                         default_value);
+    error = GetRegString(key, L"config_dir", s->config_dir, sizeof(s->config_dir), default_value);
     if (error != ERROR_SUCCESS)
     {
         goto out;
     }
 
-    error = GetRegString(key, L"config_ext", s->ext_string, sizeof(s->ext_string),
-                         L".ovpn");
+    error = GetRegString(key, L"config_ext", s->ext_string, sizeof(s->ext_string), L".ovpn");
     if (error != ERROR_SUCCESS)
     {
         goto out;
@@ -110,8 +111,7 @@ GetOpenvpnSettings(settings_t *s)
         goto out;
     }
 
-    error = GetRegString(key, L"priority", priority, sizeof(priority),
-                         L"NORMAL_PRIORITY_CLASS");
+    error = GetRegString(key, L"priority", priority, sizeof(priority), L"NORMAL_PRIORITY_CLASS");
     if (error != ERROR_SUCCESS)
     {
         goto out;
@@ -124,8 +124,11 @@ GetOpenvpnSettings(settings_t *s)
     }
 
     /* read if present, else use default */
-    error = GetRegString(key, L"ovpn_admin_group", s->ovpn_admin_group,
-                         sizeof(s->ovpn_admin_group), OVPN_ADMIN_GROUP);
+    error = GetRegString(key,
+                         L"ovpn_admin_group",
+                         s->ovpn_admin_group,
+                         sizeof(s->ovpn_admin_group),
+                         OVPN_ADMIN_GROUP);
     if (error != ERROR_SUCCESS)
     {
         goto out;
@@ -170,7 +173,8 @@ GetOpenvpnSettings(settings_t *s)
     else
     {
         SetLastError(ERROR_INVALID_DATA);
-        error = MsgToEventLog(M_ERR, L"Log file append flag (given as '%ls') must be '0' or '1'", append);
+        error = MsgToEventLog(
+            M_ERR, L"Log file append flag (given as '%ls') must be '0' or '1'", append);
         goto out;
     }
 
@@ -189,10 +193,16 @@ GetLastErrorText(void)
     LPWSTR tmp = NULL;
 
     error = GetLastError();
-    len = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                        NULL, error, LANG_NEUTRAL, tmp, 0, NULL);
+    len = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+                            | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                        NULL,
+                        error,
+                        LANG_NEUTRAL,
+                        tmp,
+                        0,
+                        NULL);
 
-    if (len == 0 || (long) _countof(buf) < (long) len + 14)
+    if (len == 0 || (long)_countof(buf) < (long)len + 14)
     {
         buf[0] = L'\0';
     }
@@ -229,18 +239,28 @@ MsgToEventLog(DWORD flags, LPCWSTR format, ...)
     hEventSource = RegisterEventSource(NULL, APPNAME);
     if (hEventSource != NULL)
     {
-        swprintf(msg[0], _countof(msg[0]),
-                 L"%ls%ls%ls: %ls", APPNAME, service_instance,
-                 (flags & MSG_FLAGS_ERROR) ? L" error" : L"", err_msg);
+        swprintf(msg[0],
+                 _countof(msg[0]),
+                 L"%ls%ls%ls: %ls",
+                 APPNAME,
+                 service_instance,
+                 (flags & MSG_FLAGS_ERROR) ? L" error" : L"",
+                 err_msg);
 
         va_start(arglist, format);
         vswprintf(msg[1], _countof(msg[1]), format, arglist);
         va_end(arglist);
 
         const WCHAR *mesg[] = { msg[0], msg[1] };
-        ReportEvent(hEventSource, flags & MSG_FLAGS_ERROR ?
-                    EVENTLOG_ERROR_TYPE : EVENTLOG_INFORMATION_TYPE,
-                    0, 0, NULL, 2, 0, mesg, NULL);
+        ReportEvent(hEventSource,
+                    flags & MSG_FLAGS_ERROR ? EVENTLOG_ERROR_TYPE : EVENTLOG_INFORMATION_TYPE,
+                    0,
+                    0,
+                    NULL,
+                    2,
+                    0,
+                    mesg,
+                    NULL);
         DeregisterEventSource(hEventSource);
     }
 
