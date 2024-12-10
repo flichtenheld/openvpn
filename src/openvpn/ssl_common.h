@@ -75,6 +75,7 @@
  *
  * @{
  */
+/* clang-format off */
 #define S_ERROR         (-2)    /**< Error state.  */
 #define S_ERROR_PRE     (-1)    /**< Error state but try to send out alerts
                                  *  before killing the keystore and moving
@@ -102,7 +103,7 @@
 #define S_GENERATED_KEYS  7     /**< The data channel keys have been generated
                                  *  The TLS session is fully authenticated
                                  *  when reaching this state. */
-
+/* clang-format on */
 /* Note that earlier versions also had a S_OP_NORMAL state that was
  * virtually identical with S_ACTIVE and the code still assumes everything
  * >= S_ACTIVE to be fully operational */

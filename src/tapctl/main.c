@@ -37,6 +37,7 @@
 #endif
 
 
+/* clang-format off */
 const WCHAR title_string[] =
     _L(PACKAGE_NAME) L" " _L(PACKAGE_VERSION)
 ;
@@ -111,6 +112,7 @@ static const WCHAR usage_message_delete[] =
     L"\n"
     L"tapctl delete <adapter GUID | adapter name>\n"
 ;
+/* clang-format on */
 
 
 /**
