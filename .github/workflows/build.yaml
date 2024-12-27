@@ -341,15 +341,12 @@ jobs:
           # versioning=semver-coerced
           repository: libressl/portable
           ref: v4.0.0
-      - name: "libressl/openbsd: checkout"
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          path: libressl/openbsd
-          # versioning=semver-coerced
-          repository: libressl/openbsd
-          ref: libressl-v4.0.0
       - name: "libressl: autogen.sh"
-        run: ./autogen.sh
+        env:
+          LIBRESSL_GIT_OPTIONS: "--no-single-branch"
+        run: |
+          bash -x ./update.sh
+          bash -x ./autogen.sh
         working-directory: libressl
       - name: "libressl: configure"
         run: ./configure
