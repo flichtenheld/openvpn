@@ -334,13 +334,20 @@ jobs:
     steps:
       - name: Install dependencies
         run: sudo apt update && sudo apt install -y liblzo2-dev libpam0g-dev liblz4-dev linux-libc-dev man2html clang libcmocka-dev python3-docutils libtool automake autoconf pkg-config libcap-ng-dev libnl-genl-3-dev
-      - name: "libressl: checkout"
+      - name: "libressl/portable: checkout"
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           path: libressl
           # versioning=semver-coerced
           repository: libressl/portable
           ref: v3.8.3
+      - name: "libressl/openbsd: checkout"
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          path: libressl/openbsd
+          # versioning=semver-coerced
+          repository: libressl/openbsd
+          ref: libressl-v3.8.3
       - name: "libressl: autogen.sh"
         run: ./autogen.sh
         working-directory: libressl
