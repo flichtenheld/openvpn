@@ -470,7 +470,7 @@ jobs:
         with:
           path: aws-lc
           repository: aws/aws-lc
-          ref: v1.42.0
+          ref: v1.49.1
       - uses: lukka/get-cmake@28983e0d3955dba2bb0a6810caae0c6cf268ec0c # v4.0.0
       - name: "AWS-LC: build"
         run: |
