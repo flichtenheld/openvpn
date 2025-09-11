@@ -43,7 +43,8 @@ vlanhdr_get_vid(const struct openvpn_8021qhdr *hdr)
     return ntohs(hdr->pcp_cfi_vid & OPENVPN_8021Q_MASK_VID);
 }
 
-#if defined(__GNUC__) || defined(__clang__)
+/* ~OPENVPN_8021Q_MASK_VID is "int" on old GCC */
+#if defined(__GNUC__) && __GNUC__ < 11
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
@@ -61,7 +62,7 @@ vlanhdr_set_vid(struct openvpn_8021qhdr *hdr, const uint16_t vid)
         (hdr->pcp_cfi_vid & ~OPENVPN_8021Q_MASK_VID) | (htons(vid) & OPENVPN_8021Q_MASK_VID);
 }
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) && __GNUC__ < 11
 #pragma GCC diagnostic pop
 #endif
 
