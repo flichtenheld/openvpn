@@ -328,6 +328,8 @@ jobs:
       LDFLAGS: ${{ matrix.ldflags }}
       CC: ${{matrix.cc}}
       UBSAN_OPTIONS: print_stacktrace=1
+      # versioning=semver-coerced
+      LIBRESSL_REPO: libressl/portable
       LIBRESSL_VERSION: v4.2.1
 
     steps:
@@ -344,8 +346,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: libressl
-          # versioning=semver-coerced
-          repository: libressl/portable
+          repository: ${{ env.LIBRESSL_REPO }}
           ref: ${{ env.LIBRESSL_VERSION }}
       - name: "libressl: autogen.sh"
         if: steps.libressl-cache.outputs.cache-hit != 'true'
@@ -413,7 +414,9 @@ jobs:
       CC: ${{matrix.cc}}
       UBSAN_OPTIONS: print_stacktrace=1
       PKG_CONFIG_PATH: /opt/lib/pkgconfig
-      MBEDTLS_VERSION: 4.0.0
+      # versioning=semver-coerced
+      MBEDTLS_REPO: Mbed-TLS/mbedtls
+      MBEDTLS_VERSION: v4.0.0
 
     steps:
       - name: Install dependencies
@@ -430,9 +433,8 @@ jobs:
         with:
           path: mbedtls
           submodules: recursive
-          # versioning=semver-coerced
-          repository: Mbed-TLS/mbedtls
-          ref: v${{ env.MBEDTLS_VERSION }}
+          repository: ${{ env.MBEDTLS_REPO }}
+          ref: ${{ env.MBEDTLS_VERSION }}
       - uses: lukka/get-cmake@f176ccd3f28bda569c43aae4894f06b2435a3375 # v4.2.3
       - name: "mbedtls: cmake"
         if: steps.mbedtls-cache.outputs.cache-hit != 'true'
@@ -491,6 +493,8 @@ jobs:
       CXX: ${{matrix.cxx}}
       UBSAN_OPTIONS: print_stacktrace=1
       AWS_LC_INSTALL: /opt/aws-lc
+      # versioning=semver-coerced
+      AWS_LC_REPO: aws/aws-lc
       AWS_LC_VERSION: v1.70.0
 
     steps:
@@ -507,8 +511,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: aws-lc
-          # versioning=semver-coerced
-          repository: aws/aws-lc
+          repository: ${{ env.AWS_LC_REPO }}
           ref: ${{ env.AWS_LC_VERSION }}
       - uses: lukka/get-cmake@f176ccd3f28bda569c43aae4894f06b2435a3375 # v4.2.3
       - name: "AWS-LC: build"
