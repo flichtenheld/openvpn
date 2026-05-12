@@ -138,7 +138,7 @@ jobs:
         test: [argv, auth_token, buffer, cryptoapi, crypto, misc, options_parse, ncp, openvpnserv, packet_id, pkt, provider, ssl, tls_crypt, user_pass]
         build: [Release, Debug]
 
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     name: "mingw unittest ${{ matrix.test }} - ${{ matrix.arch }} - ${{ matrix.build }} - OSSL"
     steps:
       - name: Checkout OpenVPN
@@ -285,7 +285,7 @@ jobs:
         VCPKG_BINARY_SOURCES: clear;default,readwrite
         VCPKG_GIT_COMMIT_ID: 031f4afe03be385aee354f15be6e6b1fe57497c7
 
-      runs-on: windows-2025
+      runs-on: windows-2025-vs2026
       steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: lukka/get-cmake@7bfc9baacbbdcb5e37957ad05c3546b3e222be3c # v4.3.2
@@ -315,6 +315,7 @@ jobs:
         with:
           configurePreset: win-${{ matrix.arch }}-release
           buildPreset: win-${{ matrix.arch }}-release
+          configurePresetAdditionalArgs: "['-GVisual Studio 18 2026']"
 
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10.9
@@ -323,6 +324,7 @@ jobs:
           configurePreset: win-${{ matrix.arch }}-release
           buildPreset: win-${{ matrix.arch }}-release
           testPreset: win-${{ matrix.arch }}-release
+          configurePresetAdditionalArgs: "['-GVisual Studio 18 2026']"
           testPresetAdditionalArgs: "['--output-on-failure']"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
