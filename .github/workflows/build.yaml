@@ -376,7 +376,7 @@ jobs:
       ovpnlibdesc: AWS-LC
       # versioning=semver-coerced
       ghrepo: aws/aws-lc
-      gitref: v1.70.0
+      gitref: v1.73.0
       libconfigure: cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$LIBPREFIX" -DBUILD_SHARED_LIBS=1
       libmake: cmake --build build
       libinstall: sudo cmake --install build
