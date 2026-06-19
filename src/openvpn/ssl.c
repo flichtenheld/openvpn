@@ -3236,9 +3236,18 @@ tls_multi_process(struct tls_multi *multi, struct buffer *to_link,
 
         /* set initial remote address. This triggers connecting with that
          * session. So we only do that if the TM_ACTIVE session is not
-         * established */
+         * established.
+         *
+         * Only seed the address from the socket if we have not already
+         * learned a remote address from an incoming packet. Otherwise a
+         * stale lsa->actual left over from a previous peer (e.g. a UDP P2P
+         * server that previously talked to a client on a different address
+         * family) would clobber the address tls_pre_decrypt() just learned
+         * from the new peer, causing subsequent control packets to be
+         * rejected as coming from an unexpected IP address. */
         if (i == TM_INITIAL && ks->state == S_INITIAL && get_primary_key(multi)->state <= S_INITIAL
-            && link_socket_actual_defined(&to_link_socket_info->lsa->actual))
+            && link_socket_actual_defined(&to_link_socket_info->lsa->actual)
+            && !link_socket_actual_defined(&ks->remote_addr))
         {
             ks->remote_addr = to_link_socket_info->lsa->actual;
         }
