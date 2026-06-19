@@ -3939,6 +3939,19 @@ tls_select_encryption_key(struct tls_multi *multi)
     for (int i = 0; i < KEY_SCAN_SIZE; ++i)
     {
         struct key_state *ks = get_key_scan(multi, i);
+
+        /* DEBUG (issue #1058): show every scanned key and the cipher of its
+         * send context so we can see why the data channel encrypts with a
+         * stale cipher after a P2P-UDP reconnect with a cipher change. */
+        const struct key_ctx *enc = &ks->crypto_options.key_ctx_bi.encrypt;
+        msg(D_TLS_KEYSELECT,
+            "TLS DEBUG-1058: select_encryption_key scan i=%d key_id=%d state=%s auth=%d "
+            "initialized=%d enc_cipher=%s epoch_format=%d enc.epoch=%d",
+            i, ks->key_id, state_name(ks->state), (int)ks->authenticated,
+            ks->crypto_options.key_ctx_bi.initialized,
+            enc->cipher ? (cipher_ctx_mode_aead(enc->cipher) ? "AEAD" : "non-AEAD") : "none",
+            (ks->crypto_options.flags & CO_EPOCH_DATA_KEY_FORMAT) ? 1 : 0, (int)enc->epoch);
+
         if (ks->state >= S_GENERATED_KEYS && ks->authenticated == KS_AUTH_TRUE)
         {
             ASSERT(ks->crypto_options.key_ctx_bi.initialized);
@@ -3953,6 +3966,15 @@ tls_select_encryption_key(struct tls_multi *multi)
                 break;
             }
         }
+    }
+    if (ks_select)
+    {
+        const struct key_ctx *enc = &ks_select->crypto_options.key_ctx_bi.encrypt;
+        msg(D_TLS_KEYSELECT,
+            "TLS DEBUG-1058: select_encryption_key CHOSE key_id=%d enc_cipher=%s enc.epoch=%d",
+            ks_select->key_id,
+            enc->cipher ? (cipher_ctx_mode_aead(enc->cipher) ? "AEAD" : "non-AEAD") : "none",
+            (int)enc->epoch);
     }
     return ks_select;
 }
