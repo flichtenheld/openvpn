@@ -3713,6 +3713,43 @@ tls_pre_decrypt(struct tls_multi *multi, const struct link_socket_actual *from, 
             goto error;
         }
 
+        /*
+         * A new peer (its session-id matches none of our sessions) wants to
+         * start a session in the TM_INITIAL slot. If that slot is still
+         * occupied by a handshake with a *different* peer it is a leftover we
+         * must clear out first. This happens for example on a P2P UDP server
+         * when a time-based renegotiation (reneg-sec) was triggered against a
+         * peer that silently went away: key_state_soft_reset() leaves a fresh
+         * handshake aimed at the old peer's address in TM_INITIAL, with its
+         * own (by now possibly already expired) must_negotiate deadline. The
+         * new peer would then inherit that stale state and its expired
+         * deadline would immediately fail the negotiation.
+         *
+         * We detect a leftover from a different peer by either a stored remote
+         * address that does not match where this packet came from, or an
+         * already-learned remote session-id (which, since the incoming
+         * session-id matched none of our sessions, necessarily differs).
+         *
+         * Note we must NOT reset merely because the slot is non-pristine: a
+         * TLS client legitimately reaches this branch with its own in-progress
+         * TM_INITIAL session (state S_PRE_START, remote_addr set to the
+         * server) when it receives the server's HARD_RESET reply. There the
+         * address matches and no remote session-id is set yet, so we leave it
+         * alone and adopt the server's session-id below.
+         */
+        struct key_state *ks_init = &session->key[KS_PRIMARY];
+        bool stale_addr = link_socket_actual_defined(&ks_init->remote_addr)
+                          && !link_socket_actual_match(&ks_init->remote_addr, from);
+        bool stale_sid = session_id_defined(&ks_init->session_id_remote);
+        if (stale_addr || stale_sid)
+        {
+            msg(D_TLS_DEBUG_LOW,
+                "TLS: Initial packet from %s but TM_INITIAL session is a leftover "
+                "from a different peer (state=%s); resetting it for the new peer",
+                print_link_socket_actual(from, &gc), state_name(ks_init->state));
+            reset_session(multi, session);
+        }
+
         if (!read_control_auth(buf, tls_session_get_tls_wrap(session, key_id), from, session->opt,
                                true))
         {
