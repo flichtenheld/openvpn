@@ -3375,6 +3375,29 @@ tls_multi_process(struct tls_multi *multi, struct buffer *to_link,
     {
         check_session_buf_not_used(to_link, &multi->session[TM_ACTIVE]);
         move_session(multi, TM_ACTIVE, TM_INITIAL, true);
+
+        /*
+         * A fresh hard-reset session has just usurped the active slot. Any
+         * session still sitting in TM_LAME_DUCK belongs to the previous,
+         * now-replaced key lineage (e.g. a former peer whose renegotiation
+         * failed was parked here via move_session() on error). Unlike a
+         * soft-reset renegotiation - where the lame duck is the genuine
+         * predecessor of the new key and is intentionally kept alive for the
+         * transition window - this leftover has no relationship with the new
+         * peer. Keeping it lets tls_select_encryption_key() pick its (possibly
+         * different-cipher) key as the data channel send key while the new
+         * key is still inside its auth_deferred_expire grace window. Discard
+         * it so only the new session's key remains.
+         */
+        if (multi->session[TM_LAME_DUCK].key[KS_PRIMARY].state != S_UNDEF
+            || multi->session[TM_LAME_DUCK].key[KS_LAME_DUCK].state != S_UNDEF)
+        {
+            msg(D_TLS_DEBUG_LOW,
+                "TLS: tls_multi_process: discarding stale lame duck session "
+                "usurped by new active session");
+            tls_session_free(&multi->session[TM_LAME_DUCK], true);
+        }
+
         tas = tls_authentication_status(multi);
         msg(D_TLS_DEBUG_LOW,
             "TLS: tls_multi_process: initial untrusted "
