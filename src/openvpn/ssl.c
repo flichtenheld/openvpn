@@ -2752,6 +2752,19 @@ static bool
 check_outgoing_ciphertext(struct key_state *ks, struct tls_session *session,
                           struct buffer *to_link, bool *continue_tls_process)
 {
+    /* An outgoing packet that has not been written out yet still points into
+     * one of our reliable send buffers. Queueing more ciphertext now would
+     * reuse that buffer and modify the packet still waiting to be sent, so
+     * wait for it to be written out first. Since a pending to_link makes
+     * tls_process() report itself as active, we are called again right after
+     * the packet has left. */
+    if (to_link->len)
+    {
+        dmsg(D_TLS_DEBUG,
+             "Deferring outgoing ciphertext, previous packet not written out yet");
+        return true;
+    }
+
     /* Outgoing Ciphertext to reliable buffer */
     if (ks->state >= S_START)
     {
