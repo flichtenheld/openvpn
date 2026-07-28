@@ -2626,10 +2626,46 @@ read_incoming_tls_plaintext(struct key_state *ks, struct buffer *buf, interval_t
     return true;
 }
 
+/**
+ * Warn if \a to_link still points into one of our reliable send buffers.
+ *
+ * Outgoing control channel packets are handed to the link layer as a buffer
+ * descriptor that points into the reliable send buffer the packet was built
+ * from (see the reliable_send() call in tls_process_state()).  As long as such
+ * a packet has not been written out, that buffer must not be touched: reusing
+ * the entry writes the payload and prepends a new packet id over the bytes of
+ * the packet that is still queued, changing it on the wire.
+ *
+ * This is only a tripwire, the callers are expected to not run into this.
+ */
+static void
+warn_if_send_buf_queued(const struct key_state *ks, const struct buffer *to_link)
+{
+    if (!to_link || !to_link->len || !to_link->data || !ks->send_reliable)
+    {
+        return;
+    }
+
+    for (int i = 0; i < ks->send_reliable->size; ++i)
+    {
+        if (ks->send_reliable->array[i].buf.data == to_link->data)
+        {
+            msg(M_INFO,
+                "Warning: reliable send buffer %d is still queued for sending "
+                "(len=%d), reusing it now would corrupt that packet",
+                i, to_link->len);
+            return;
+        }
+    }
+}
+
 static bool
-write_outgoing_tls_ciphertext(struct tls_session *session, bool *continue_tls_process)
+write_outgoing_tls_ciphertext(struct tls_session *session, struct buffer *to_link,
+                              bool *continue_tls_process)
 {
     struct key_state *ks = &session->key[KS_PRIMARY];
+
+    warn_if_send_buf_queued(ks, to_link);
 
     int rel_avail = reliable_get_num_output_sequenced_available(ks->send_reliable);
     if (rel_avail == 0)
@@ -2714,7 +2750,7 @@ write_outgoing_tls_ciphertext(struct tls_session *session, bool *continue_tls_pr
 
 static bool
 check_outgoing_ciphertext(struct key_state *ks, struct tls_session *session,
-                          bool *continue_tls_process)
+                          struct buffer *to_link, bool *continue_tls_process)
 {
     /* Outgoing Ciphertext to reliable buffer */
     if (ks->state >= S_START)
@@ -2722,7 +2758,7 @@ check_outgoing_ciphertext(struct key_state *ks, struct tls_session *session,
         struct buffer *buf = reliable_get_buf_output_sequenced(ks->send_reliable);
         if (buf)
         {
-            if (!write_outgoing_tls_ciphertext(session, continue_tls_process))
+            if (!write_outgoing_tls_ciphertext(session, to_link, continue_tls_process))
             {
                 return false;
             }
@@ -2895,7 +2931,7 @@ tls_process_state(struct tls_multi *multi, struct tls_session *session, struct b
             dmsg(D_TLS_DEBUG, "Outgoing Plaintext -> TLS");
         }
     }
-    if (!check_outgoing_ciphertext(ks, session, &continue_tls_process))
+    if (!check_outgoing_ciphertext(ks, session, to_link, &continue_tls_process))
     {
         goto error;
     }
@@ -2907,7 +2943,7 @@ error:
     /* Shut down the TLS session but do a last read from the TLS
      * object to be able to read potential TLS alerts */
     key_state_ssl_shutdown(&ks->ks_ssl);
-    check_outgoing_ciphertext(ks, session, &continue_tls_process);
+    check_outgoing_ciphertext(ks, session, to_link, &continue_tls_process);
 
     /* Put ourselves in the pre error state that will only send out the
      * control channel packets but nothing else */
