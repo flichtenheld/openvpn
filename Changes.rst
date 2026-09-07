@@ -1,5 +1,25 @@
 Overview of changes in 2.8
 ==========================
+User-visible Changes
+--------------------
+Parsing Distinguished Names in certificates
+    (OpenSSL backend:) OpenVPN now rejects certificates that have a null-byte
+    inside any of the field values of their subject. To avoid ambiguity in the
+    parsed subject, OpenVPN escapes the following characters by prefixing them with
+    a backslash:
+     * " " (space) at the start or end of a field,
+     * "#" at the start of a field,
+     * ",", "+", """, "\", "<", ">" and ";" anywhere.
+
+    As a result, if you use the option ``--verify-x509-name <expected subject>``,
+    you need to prefix these characters with a backslash in your configuration.
+    The subject passed to a ``--tls-verify`` script is escaped in the same way and
+    you may need to adjust your script.
+
+    (Mbed TLS backend:) The behavior has not changed. Subjects with null-bytes were
+    already rejected (assuming OpenVPN was built with Mbed TLS 3.5 or later) and
+    the characters mentioned above were already escaped. However, the behavior of
+    Mbed TLS is slightly different from OpenSSL in that it also escapes "=".
 
 
 Overview of changes in 2.7
