@@ -535,7 +535,7 @@ tls_ctx_set_tls_groups(struct tls_root_ctx *ctx, const char *groups)
     ALLOC_ARRAY_CLEAR_GC(glist, int, groups_count, &gc);
 
     /* Parse allowed ciphers, getting IDs */
-    int glistlen = 0;
+    size_t glistlen = 0;
     char *tmp_groups = string_alloc(groups, &gc);
 
     const char *token;
@@ -558,7 +558,13 @@ tls_ctx_set_tls_groups(struct tls_root_ctx *ctx, const char *groups)
         }
     }
 
-    if (!SSL_CTX_set1_groups(ctx->ctx, glist, glistlen))
+#if defined(LIBRESSL_VERSION_NUMBER) || defined(OPENSSL_IS_AWSLC)
+    long ret = SSL_CTX_set1_groups(ctx->ctx, glist, glistlen);
+#else
+    /* OpenSSL 1.1.1: macro wrapping SSL_CTX_ctrl(), which takes a long */
+    long ret = SSL_CTX_set1_groups(ctx->ctx, glist, (long)glistlen);
+#endif
+    if (!ret)
     {
         crypto_msg(M_FATAL, "Failed to set allowed TLS group list: %s", groups);
     }
