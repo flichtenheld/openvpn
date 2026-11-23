@@ -29,6 +29,8 @@ fi
 # Enable systemd support on Linux by default
 if [ "$uname_kernel" = "Linux" ]; then
     default_configure_opts="--enable-systemd"
+    #XXX: TEST
+    branch_pkg_config_path="/usr/local/test"
 fi
 
 echo "branch_config_opts=$enable_werror $default_configure_opts"
